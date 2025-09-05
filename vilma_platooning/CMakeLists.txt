@@ -8,8 +8,11 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
-find_package(vilma_interface REQUIRED)
+find_package(rclcpp REQUIRED)
+# find_package(vilma_interface REQUIRED)
 find_package(vilma_v2x REQUIRED)
+find_package(etsi_its_cam_msgs REQUIRED)
+find_package(etsi_its_msgs_utils REQUIRED)
 
 add_library(vilma_platooning src/vilma_platooning.cpp)
 target_compile_features(vilma_platooning PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
@@ -18,8 +21,11 @@ target_include_directories(vilma_platooning PUBLIC
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(
   vilma_platooning
-  "vilma_interface"
+  "rclcpp"
+  # "vilma_interface"
   "vilma_v2x"
+  "etsi_its_cam_msgs"
+  "etsi_its_msgs_utils"
 )
 
 # Causes the visibility macros to use dllexport rather than dllimport,

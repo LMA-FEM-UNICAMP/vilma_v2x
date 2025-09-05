@@ -23,6 +23,8 @@ namespace vilma_platooning
 
   public:
 
+    VilmaPlatooning();
+
     void cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg);
 
   private:

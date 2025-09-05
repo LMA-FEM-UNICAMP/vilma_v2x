@@ -7,7 +7,7 @@ int main(int argc, char **argv)
 {
     rclcpp::init(argc, argv);
 
-    auto vilma_platooning_node = std::make_shared<vilma::VilmaPlatooning>();
+    auto vilma_platooning_node = std::make_shared<vilma_platooning::VilmaPlatooning>();
 
     //* Creating multi-threaded executor
     rclcpp::executors::MultiThreadedExecutor mt_executor;
