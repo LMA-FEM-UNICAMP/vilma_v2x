@@ -22,7 +22,7 @@
   <script>
     // Connect to ROS bridge
     const ros = new ROSLIB.Ros({
-      url: 'ws://localhost:9090' // Change to your ROS server IP
+      url: 'ws://143.106.207.89:9090' // Change to your ROS server IP
     });
 
     ros.on('connection', () => console.log('Connected to ROS'));
@@ -42,9 +42,18 @@
       name: '/hmi/status',
       messageType: 'std_msgs/String'
     });
+    const dataTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/hmi/data',
+      messageType: 'std_msgs/Float32'
+    });
 
     statusTopic.subscribe((message) => {
       document.getElementById('statusBox').innerText = 'Status: ' + message.data;
+    });
+
+    dataTopic.subscribe((message) => {
+      document.getElementById('dataBox').innerText = 'Data: ' + message.data + ' km/h';
     });
 
     function sendCommand(action) {
