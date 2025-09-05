@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ROS HMI</title>
+  <style>
+    body { text-align: center; font-family: Arial; padding: 20px; }
+    .button { padding: 10px 20px; margin: 10px; background: #4CAF50; color: white; border: none; border-radius: 10px; }
+    .display-box { border: 1px solid #ddd; padding: 15px; margin: 10px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>ROS HMI</h1>
+  <div class="display-box" id="statusBox">Status: Idle</div>
+  <div class="display-box" id="dataBox">Data: 0</div>
+
+  <button class="button" onclick="sendCommand('start')">Start</button>
+  <button class="button" onclick="sendCommand('stop')">Stop</button>
+
+  <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+  <script>
+    // Connect to ROS bridge
+    const ros = new ROSLIB.Ros({
+      url: 'ws://localhost:9090' // Change to your ROS server IP
+    });
+
+    ros.on('connection', () => console.log('Connected to ROS'));
+    ros.on('error', (error) => console.log('Error: ', error));
+    ros.on('close', () => console.log('Connection closed.'));
+
+    // Publisher for commands
+    const commandTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/hmi/command',
+      messageType: 'std_msgs/String'
+    });
+
+    // Subscriber for status updates
+    const statusTopic = new ROSLIB.Topic({
+      ros: ros,
+      name: '/hmi/status',
+      messageType: 'std_msgs/String'
+    });
+
+    statusTopic.subscribe((message) => {
+      document.getElementById('statusBox').innerText = 'Status: ' + message.data;
+    });
+
+    function sendCommand(action) {
+      const msg = new ROSLIB.Message({ data: action });
+      commandTopic.publish(msg);
+    }
+  </script>
+</body>
+</html>
