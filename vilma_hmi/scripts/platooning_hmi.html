@@ -20,9 +20,27 @@
 
   <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
   <script>
+
+    // Get ROSBridge server IP and port
+
+    let rosServerIpPort = "143.106.207.89:9090";
+
+    fetch('/config.json')
+      .then(res => res.json())
+      .then(cfg => {
+      rosServerIpPort = cfg.serviceIp;
+      });
+    
+    console.log(rosServerIpPort);
+
     // Connect to ROS bridge
+
+    let rosServerUrl = "ws://"+rosServerIpPort;
+
+    console.log(rosServerUrl);
+
     const ros = new ROSLIB.Ros({
-      url: 'ws://143.106.207.89:9090' // Change to your ROS server IP
+      url: rosServerUrl 
     });
 
     ros.on('connection', () => console.log('Connected to ROS'));
