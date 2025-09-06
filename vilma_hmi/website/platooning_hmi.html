@@ -15,16 +15,17 @@
 
     body {
       text-align: center;
-      font-family: Arial;
+      font-family: Lato;
       padding: 20px;
       display: flex;
       flex-direction: column;
     }
 
     .button {
-      padding: 20px 30px;
-      margin: 28px;
-      background: #0e005a;
+      width: 100px;
+      padding: 20px 0px;
+      margin: 5px;
+      background: #22314E;
       color: white;
       border: 2px solid #ddd;
       border-radius: 10px;
@@ -40,14 +41,14 @@
     }
 
     .display-box {
-      width: 250px;
+      width: 300px;
       padding: 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
       text-align: center;
       box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
       background: #f9f9f9;
-      font-family: Arial, sans-serif;
+      font-family: Lato, sans-serif;
     }
 
     .display-box .title {
@@ -59,6 +60,12 @@
 
     .display-box .value {
       font-size: 20px;
+      font-weight: normal;
+      color: #222;
+    }
+
+    .display-box .valuesmall {
+      font-size: 14px;
       font-weight: normal;
       color: #222;
     }
@@ -76,7 +83,7 @@
     .footer-logo {
       display: block;
       margin: 0 auto 10px;
-      width: 280px;
+      width: 200px;
       height: auto;
     }
   </style>
@@ -88,11 +95,9 @@
 
     <h1>VILMA HMI</h1>
 
-    <h3>Platooning</h3>
-
     <div class="display-box">
       <div class="title">Status</div>
-      <div class="value" id="statusBox"> - </div>
+      <div class="valuesmall" id="statusBox">Platooning disabled | Velocity control active</div>
     </div>
 
     <div class="display-box">
@@ -105,8 +110,19 @@
       <div class="value" id="speedBox"> - km/h</div>
     </div>
 
-    <button class="button" onclick="sendCommand(1)">Start</button>
-    <button class="button" onclick="sendCommand(0)">Stop</button>
+    <div class="display-box">
+      <div class="title">Throttle</div>
+      <div class="value" id="throttleBox"> - %</div>
+    </div>
+
+    <div class="display-box">
+      <div class="title">Braking</div>
+      <div class="value" id="brakingBox"> - %</div>
+    </div>
+
+    <button class="button" onclick="sendCommand(2)">Start</button>
+    <button class="button" onclick="sendCommand(1)">Stop</button>
+    <button class="button" onclick="sendCommand(3)">Pause</button>
 
   </div>
 
@@ -125,6 +141,8 @@
     let statusTopic = new ROSLIB.Topic();
     let distanceTopic = new ROSLIB.Topic();
     let speedTopic = new ROSLIB.Topic();
+    let throttleTopic = new ROSLIB.Topic();
+    let brakingTopic = new ROSLIB.Topic();
 
     async function loadConfigAndStart() {
 
@@ -174,6 +192,16 @@
         name: '/hmi/speed',
         messageType: 'std_msgs/Float32'
       });
+      throttleTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/throttle',
+        messageType: 'std_msgs/Float32'
+      });
+      brakingTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/braking',
+        messageType: 'std_msgs/Float32'
+      });
 
       // Subscribers callbacks
       statusTopic.subscribe((message) => {
@@ -181,11 +209,19 @@
       });
 
       distanceTopic.subscribe((message) => {
-        document.getElementById('dataBox').innerText = 'Distance: ' + message.data.toFixed(2) + ' m';
+        document.getElementById('distanceBox').innerText = 'Distance: ' + message.data.toFixed(2) + ' m';
+      });
+
+      throttleTopic.subscribe((message) => {
+        document.getElementById('throttleBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' %';
+      });
+
+      brakingTopic.subscribe((message) => {
+        document.getElementById('brakingBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' %';
       });
 
       speedTopic.subscribe((message) => {
-        document.getElementById('dataBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' km/h';
+        document.getElementById('speedBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' km/h';
       });
 
     }

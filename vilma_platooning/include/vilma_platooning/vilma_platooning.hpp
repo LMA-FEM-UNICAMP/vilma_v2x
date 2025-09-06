@@ -8,6 +8,7 @@
 
 #include "std_msgs/msg/u_int16.hpp"
 #include "std_msgs/msg/float32.hpp"
+#include "std_msgs/msg/float64_multi_array.hpp"
 #include "std_msgs/msg/string.hpp"
 
 #include <autoware_control_msgs/msg/control.hpp>
