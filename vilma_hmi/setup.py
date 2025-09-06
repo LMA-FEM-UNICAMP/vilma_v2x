@@ -13,7 +13,8 @@ setup(
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
-        (os.path.join('share', package_name, 'scripts'), glob(os.path.join('scripts', '*.[html][json]'))),
+        (os.path.join('share', package_name, 'scripts'), glob(os.path.join('scripts', '*.json'))),
+        (os.path.join('share', package_name, 'scripts'), glob(os.path.join('scripts', '*.html'))),
         (os.path.join('share', package_name, 'scripts', 'images'),  glob(os.path.join('images', '*.png'))),
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*')))
     ],
