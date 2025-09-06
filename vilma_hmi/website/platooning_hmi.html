@@ -154,8 +154,8 @@
       // Configure publishers
       commandTopic = new ROSLIB.Topic({
         ros: ros,
-        name: '/hmi/command',
-        messageType: 'std_msgs/Int16'
+        name: '/platooning/engage',
+        messageType: 'std_msgs/UInt16'
       });
 
       // Configure subscribers
