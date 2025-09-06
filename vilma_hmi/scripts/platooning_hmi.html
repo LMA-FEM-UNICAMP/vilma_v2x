@@ -1,83 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ROS HMI</title>
+  <title>VILMA HMI</title>
   <style>
-    body { text-align: center; font-family: Arial; padding: 20px; }
-    .button { padding: 10px 20px; margin: 10px; background: #4CAF50; color: white; border: none; border-radius: 10px; }
-    .display-box { border: 1px solid #ddd; padding: 15px; margin: 10px; border-radius: 8px; }
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      text-align: center;
+      font-family: Arial;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .button {
+      padding: 20px 30px;
+      margin: 28px;
+      background: #0e005a;
+      color: white;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .display-box {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin: 10px auto;
+      border-radius: 8px;
+    }
+
+    .display-box {
+      width: 250px;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      text-align: center;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      background: #f9f9f9;
+      font-family: Arial, sans-serif;
+    }
+
+    .display-box .title {
+      font-size: 12px;
+      font-weight: bold;
+      margin-bottom: 5px;
+      color: #555;
+    }
+
+    .display-box .value {
+      font-size: 20px;
+      font-weight: normal;
+      color: #222;
+    }
+
+    .content {
+      flex: 1;
+    }
+
+    .footer {
+      background-color: #fff;
+      padding: 15px;
+      text-align: center;
+    }
   </style>
 </head>
-<body>
-  <h1>ROS HMI</h1>
-  <div class="display-box" id="statusBox">Status: Idle</div>
-  <div class="display-box" id="dataBox">Data: 0</div>
 
-  <button class="button" onclick="sendCommand('start')">Start</button>
-  <button class="button" onclick="sendCommand('stop')">Stop</button>
+<body>
+
+  <div class=content>
+
+    <h1>VILMA HMI</h1>
+
+    <h3>Platooning</h3>
+
+    <div class="display-box">
+      <div class="title">Status</div>
+      <div class="value" id="statusBox"> - </div>
+    </div>
+
+    <div class="display-box">
+      <div class="title">Distance</div>
+      <div class="value" id="distanceBox"> - m</div>
+    </div>
+
+    <div class="display-box">
+      <div class="title">Speed</div>
+      <div class="value" id="speedBox"> - km/h</div>
+    </div>
+
+    <button class="button" onclick="sendCommand(1)">Start</button>
+    <button class="button" onclick="sendCommand(0)">Stop</button>
+
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
   <script>
 
-    // Get ROSBridge server IP and port
-
     let rosServerIpPort = "143.106.207.89:9090";
 
-    fetch('/config.json')
-      .then(res => res.json())
-      .then(cfg => {
-      rosServerIpPort = cfg.serviceIp;
-      });
-    
-    console.log(rosServerIpPort);
-
-    // Connect to ROS bridge
-
-    let rosServerUrl = "ws://"+rosServerIpPort;
-
-    console.log(rosServerUrl);
-
-    const ros = new ROSLIB.Ros({
-      url: rosServerUrl 
-    });
-
-    ros.on('connection', () => console.log('Connected to ROS'));
-    ros.on('error', (error) => console.log('Error: ', error));
-    ros.on('close', () => console.log('Connection closed.'));
+    // ROS server object
+    let ros = new ROSLIB.Ros();
 
     // Publisher for commands
-    const commandTopic = new ROSLIB.Topic({
-      ros: ros,
-      name: '/hmi/command',
-      messageType: 'std_msgs/String'
-    });
+    let commandTopic = new ROSLIB.Topic();
 
     // Subscriber for status updates
-    const statusTopic = new ROSLIB.Topic({
-      ros: ros,
-      name: '/hmi/status',
-      messageType: 'std_msgs/String'
-    });
-    const dataTopic = new ROSLIB.Topic({
-      ros: ros,
-      name: '/hmi/data',
-      messageType: 'std_msgs/Float32'
-    });
+    let statusTopic = new ROSLIB.Topic();
+    let distanceTopic = new ROSLIB.Topic();
+    let speedTopic = new ROSLIB.Topic();
 
-    statusTopic.subscribe((message) => {
-      document.getElementById('statusBox').innerText = 'Status: ' + message.data;
-    });
+    async function loadConfigAndStart() {
 
-    dataTopic.subscribe((message) => {
-      document.getElementById('dataBox').innerText = 'Data: ' + message.data + ' km/h';
-    });
+      try {
+        const res = await fetch('/config.json');      // waits until fetch is done
+        const cfg = await res.json();                 // waits until JSON is parsed
+        rosServerIpPort = cfg.serviceIp;
+        console.log("JSON READ:", cfg.serviceIp);
+      } catch (err) {
+        console.error("Error loading config:", err);
+      }
 
+      // Get ROSBridge server IP and port
+      console.log("rosServerIpPort" + rosServerIpPort);
+
+      // Connect to ROS bridge
+      let rosServerUrl = "ws://" + rosServerIpPort;
+
+      ros = new ROSLIB.Ros({
+        url: rosServerUrl
+      });
+
+      ros.on('connection', () => console.log('Connected to ROS'));
+      ros.on('error', (error) => console.log('Error: ', error));
+      ros.on('close', () => console.log('Connection closed.'));
+
+      // Configure publishers
+      commandTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/command',
+        messageType: 'std_msgs/Int16'
+      });
+
+      // Configure subscribers
+      statusTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/status',
+        messageType: 'std_msgs/String'
+      });
+      distanceTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/distance',
+        messageType: 'std_msgs/Float32'
+      });
+      speedTopic = new ROSLIB.Topic({
+        ros: ros,
+        name: '/hmi/speed',
+        messageType: 'std_msgs/Float32'
+      });
+
+      // Subscribers callbacks
+      statusTopic.subscribe((message) => {
+        document.getElementById('statusBox').innerText = 'Status: ' + message.data;
+      });
+
+      distanceTopic.subscribe((message) => {
+        document.getElementById('dataBox').innerText = 'Distance: ' + message.data.toFixed(2) + ' m';
+      });
+
+      speedTopic.subscribe((message) => {
+        document.getElementById('dataBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' km/h';
+      });
+
+    }
+
+
+    // Publish function
     function sendCommand(action) {
       const msg = new ROSLIB.Message({ data: action });
       commandTopic.publish(msg);
     }
+
+    loadConfigAndStart();
+
+
   </script>
 </body>
+
+<footer class="footer">
+  <p>Laboratory of Autonomous Mobility (LMA)</p>
+</footer>
+
 </html>
