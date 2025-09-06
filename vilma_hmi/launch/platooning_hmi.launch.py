@@ -1,6 +1,7 @@
 import os
 import json
 import yaml
+import errno
 from launch import LaunchDescription
 from launch.actions import ExecuteProcess
 from launch.actions import IncludeLaunchDescription
@@ -9,10 +10,20 @@ from ament_index_python.packages import get_package_share_directory
 def load_yaml(yaml_file_path):
     with open(yaml_file_path, 'r') as f:
         return yaml.safe_load(f)
+    
+def symlink_force(target, link_name):
+    try:
+        os.symlink(target, link_name)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            os.remove(link_name)
+            os.symlink(target, link_name)
+        else:
+            raise e
 
 def generate_launch_description():
     
-    server_dir = os.path.join(get_package_share_directory("vilma_hmi"), "scripts")
+    server_dir = os.path.join(get_package_share_directory("vilma_hmi"), "website")
     params_dir = os.path.join(get_package_share_directory("vilma_hmi"), "config")
     
     params = load_yaml(os.path.join(params_dir, 'platooning.param.yaml'))
@@ -20,6 +31,10 @@ def generate_launch_description():
     rosbridge_ip = params['vilma_hmi']['ros__parameters']['server_ip']
     rosbridge_port = params['vilma_hmi']['ros__parameters']['rosbridge_port']
     hmi_port = params['vilma_hmi']['ros__parameters']['server_port']
+    index = params['vilma_hmi']['ros__parameters']['index']
+    
+    # Create index.html file
+    symlink_force(os.path.join(server_dir, index), os.path.join(server_dir, 'index.html'))
     
     
     config = {"serviceIp": f"{rosbridge_ip}:{rosbridge_port}"}
