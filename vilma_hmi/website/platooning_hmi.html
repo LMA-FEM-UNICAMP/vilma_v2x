@@ -97,27 +97,27 @@
 
     <div class="display-box">
       <div class="title">Status</div>
-      <div class="valuesmall" id="statusBox">Platooning disabled | Velocity control active</div>
+      <div class="valuesmall" id="statusBox">Waiting ROS data...</div>
     </div>
 
     <div class="display-box">
       <div class="title">Distance</div>
-      <div class="value" id="distanceBox"> - m</div>
+      <div class="value" id="distanceBox">-</div>
     </div>
 
     <div class="display-box">
       <div class="title">Speed</div>
-      <div class="value" id="speedBox"> - km/h</div>
+      <div class="value" id="speedBox">-</div>
     </div>
 
     <div class="display-box">
       <div class="title">Throttle</div>
-      <div class="value" id="throttleBox"> - %</div>
+      <div class="value" id="throttleBox">-</div>
     </div>
 
     <div class="display-box">
       <div class="title">Braking</div>
-      <div class="value" id="brakingBox"> - %</div>
+      <div class="value" id="brakingBox">-</div>
     </div>
 
     <button class="button" onclick="sendCommand(2)">Start</button>
@@ -205,23 +205,23 @@
 
       // Subscribers callbacks
       statusTopic.subscribe((message) => {
-        document.getElementById('statusBox').innerText = 'Status: ' + message.data;
+        document.getElementById('statusBox').innerText = message.data;
       });
 
       distanceTopic.subscribe((message) => {
-        document.getElementById('distanceBox').innerText = 'Distance: ' + message.data.toFixed(2) + ' m';
+        document.getElementById('distanceBox').innerText = message.data.toFixed(2) + ' m';
       });
 
       throttleTopic.subscribe((message) => {
-        document.getElementById('throttleBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' %';
+        document.getElementById('throttleBox').innerText = message.data.toFixed(2) + ' %';
       });
 
       brakingTopic.subscribe((message) => {
-        document.getElementById('brakingBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' %';
+        document.getElementById('brakingBox').innerText = message.data.toFixed(2) + ' %';
       });
 
       speedTopic.subscribe((message) => {
-        document.getElementById('speedBox').innerText = 'Speed: ' + message.data.toFixed(2) + ' km/h';
+        document.getElementById('speedBox').innerText = message.data.toFixed(2) + ' km/h';
       });
 
     }
