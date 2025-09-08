@@ -40,7 +40,7 @@ class publisher_cam(Node):
     def __init__(self):
 
         super().__init__("cam_publisher")
-        topic = "/etsi_its_conversion/cam/in"
+        topic = "/cam/in"
         self.publisher_cam = self.create_publisher(CAM, topic, 1)
         self.timer = self.create_timer(1, self.publish)
         

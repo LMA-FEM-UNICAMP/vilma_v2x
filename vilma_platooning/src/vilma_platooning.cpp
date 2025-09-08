@@ -52,7 +52,7 @@ namespace vilma_platooning
             sub_options);
 
         cam_sub_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-            "etsi_its_conversion/cam/in", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
+            "/cam/in", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
             sub_options);
 
         platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
