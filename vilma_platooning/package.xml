@@ -12,7 +12,7 @@
   <depend>rclcpp</depend>
   <depend>vilma_interface</depend>
   <depend>vilma_v2x</depend>
-  <depend>etsi_its_messages</depend>col
+  <depend>etsi_its_messages</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
