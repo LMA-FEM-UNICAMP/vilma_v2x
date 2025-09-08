@@ -295,7 +295,9 @@ namespace vilma_platooning
 
             double error = distance_setpoint - target_states.distance;
 
-            double action = error * 0.3 + follower_states.speed;
+            double kp = 0.3;
+
+            double action = follower_states.speed - error * kp; // u = x_dot + e_dist*kp
 
             autoware_control_msgs::msg::Control control_action;
 
