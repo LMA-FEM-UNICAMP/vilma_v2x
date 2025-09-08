@@ -14,6 +14,7 @@ find_package(vilma_v2x REQUIRED)
 find_package(etsi_its_cam_msgs REQUIRED)
 find_package(etsi_its_msgs_utils REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
 
@@ -39,6 +40,7 @@ ament_target_dependencies(
   "etsi_its_cam_msgs"
   "etsi_its_msgs_utils"
   "std_msgs"
+  "sensor_msgs"
   "autoware_control_msgs"
   "autoware_vehicle_msgs"
 
@@ -72,6 +74,17 @@ install(DIRECTORY libraries/haversine
   DESTINATION include/${PROJECT_NAME}
   FILES_MATCHING PATTERN "*.hpp"
 )
+
+install(
+  PROGRAMS scripts/simulate_target.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(DIRECTORY 
+        config
+        launch
+        scripts
+        DESTINATION share/${PROJECT_NAME})
 
 add_executable(vilma_platooning_node src/vilma_platooning_node.cpp)
 target_include_directories(vilma_platooning_node PUBLIC

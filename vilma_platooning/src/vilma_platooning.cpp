@@ -20,6 +20,9 @@ namespace vilma_platooning
         /// Initialization
         platooning_state_ = false;
 
+        following_vehicle_states_.latitude = 0.0;
+        following_vehicle_states_.longitude = 0.0;
+
         /// ROS2 entities
         rclcpp::SubscriptionOptions sub_options;
 
@@ -41,25 +44,38 @@ namespace vilma_platooning
                                                                             rmw_qos_profile_services_default, platooning_cb_group_);
 
         control_mode_report_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
-            "/vehicle/status/control_mode", 10, std::bind(&VilmaPlatooning::control_mode_callback, this, _1),
+            "/vehicle/status/control_mode", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::control_mode_callback, this, _1),
             sub_options);
 
         velocity_report_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::VelocityReport>(
-            "/vehicle/status/velocity_status", 10, std::bind(&VilmaPlatooning::velocity_report_callback, this, _1),
+            "/vehicle/status/velocity_status", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::velocity_report_callback, this, _1),
             sub_options);
 
         cam_sub_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-            "/cam/in", 10, std::bind(&VilmaPlatooning::cam_callback, this, _1),
+            "etsi_its_conversion/cam/in", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
             sub_options);
 
         platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
-            "/platooning/engage", 10, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
+            "/platooning/engage", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
             sub_options);
 
-        hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", 1);
-        hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", 1);
-        hmi_distance_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/distance", 1);
-        hmi_status_pub_ = this->create_publisher<std_msgs::msg::String>("/hmi/status", 1);
+        follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
+            "follower_gnss_sub_", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
+            sub_options);
+
+        control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
+        hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", rclcpp::QoS{1});
+        hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", rclcpp::QoS{1});
+        hmi_distance_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/distance", rclcpp::QoS{1});
+        hmi_status_pub_ = this->create_publisher<std_msgs::msg::String>("/hmi/status", rclcpp::QoS{1});
+    }
+
+    void VilmaPlatooning::follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
+    {
+        following_vehicle_states_mutex_.lock();
+        following_vehicle_states_.longitude = msg->longitude;
+        following_vehicle_states_.latitude = msg->latitude;
+        following_vehicle_states_mutex_.unlock();
     }
 
     void VilmaPlatooning::control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg)
@@ -139,20 +155,13 @@ namespace vilma_platooning
             change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
         }
-
-        if (change_control_mode_result)
-        {
-            RCLCPP_INFO(this->get_logger(), "Control mode changed sucessfully");
-        }
-        else
-        {
-            RCLCPP_ERROR(this->get_logger(), "Can't change control mode");
-        }
     }
 
     bool VilmaPlatooning::change_control_mode(const uint8_t control_mode)
     {
         auto change_control_mode_request = std::make_shared<ControlModeCommand::Request>();
+
+        uint8_t i = 0;
 
         while (!control_mode_command_cli_->wait_for_service(1s))
         {
@@ -161,28 +170,27 @@ namespace vilma_platooning
                 RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service.");
             }
             RCLCPP_INFO(this->get_logger(), "Service not available yet, waiting again...");
+
+            if (i > 5)
+            {
+                RCLCPP_ERROR(this->get_logger(), "Can't get response from service.");
+                return 0;
+            }
+            i++;
         }
 
         change_control_mode_request->mode = control_mode;
 
         auto change_control_mode_result = control_mode_command_cli_->async_send_request(change_control_mode_request);
 
-        if (rclcpp::spin_until_future_complete(shared_from_this(), change_control_mode_result) == rclcpp::FutureReturnCode::SUCCESS)
+        if (change_control_mode_result.get()->success)
         {
-            if (change_control_mode_result.get()->success)
-            {
-                RCLCPP_INFO(this->get_logger(), "Control mode change successful.");
-                return 1;
-            }
-            else
-            {
-                RCLCPP_WARN(this->get_logger(), "Control mode change unsuccessful.");
-                return 0;
-            }
+            RCLCPP_INFO(this->get_logger(), "Control mode changed successful.");
+            return 1;
         }
         else
         {
-            RCLCPP_ERROR(this->get_logger(), "Failed to call service to change control mode.");
+            RCLCPP_WARN(this->get_logger(), "Control mode changed unsuccessful.");
             return 0;
         }
     }
@@ -208,12 +216,10 @@ namespace vilma_platooning
         std_msgs::msg::Float32 distance_hmi;
 
         target_vehicle_states_mutex_.lock();
-        target_speed_hmi.data = target_vehicle_states_.speed;
         distance_hmi.data = target_vehicle_states_.distance;
         target_vehicle_states_mutex_.unlock();
 
-        hmi_follower_speed_pub_->publish(target_speed_hmi);
-        hmi_target_speed_pub_->publish(distance_hmi);
+        hmi_distance_pub_->publish(distance_hmi);
 
         std_msgs::msg::String status_hmi;
 
@@ -269,8 +275,11 @@ namespace vilma_platooning
         platooning_state = platooning_state_;
         platooning_state_mutex_.unlock();
 
-        if (platooning_state)
+        if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE or platooning_state == VilmaPlatooning::PLATOONING_PAUSE)
         {
+
+            double distance_setpoint = 10.0;
+
             vehicle_states_t follower_states;
             vehicle_states_t target_states;
 
@@ -283,6 +292,19 @@ namespace vilma_platooning
             target_vehicle_states_mutex_.unlock();
 
             // ! Run platooning control
+
+            double error = distance_setpoint - target_states.distance;
+
+            double action = error * 0.3 + follower_states.speed;
+
+            autoware_control_msgs::msg::Control control_action;
+
+            control_action.longitudinal.velocity = action;
+
+            if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE)
+            {
+                control_commmand_pub_->publish(control_action);
+            }
         }
     }
 

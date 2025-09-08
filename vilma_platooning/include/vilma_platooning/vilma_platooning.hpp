@@ -11,8 +11,9 @@
 
 #include "std_msgs/msg/u_int16.hpp"
 #include "std_msgs/msg/float32.hpp"
-#include "std_msgs/msg/float64_multi_array.hpp"
 #include "std_msgs/msg/string.hpp"
+
+#include "sensor_msgs/msg/nav_sat_fix.hpp"
 
 #include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_vehicle_msgs/msg/control_mode_report.hpp>
@@ -54,6 +55,8 @@ namespace vilma_platooning
 
     void velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg);
 
+    void follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
+
     void platooning_callback();
 
   private:
@@ -77,6 +80,8 @@ namespace vilma_platooning
     rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_sub_;
 
     rclcpp::Subscription<std_msgs::msg::UInt16>::SharedPtr platooning_engage_sub_;
+
+    rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr follower_gnss_sub_;
 
     rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr control_mode_report_sub_;
     rclcpp::Subscription<autoware_vehicle_msgs::msg::VelocityReport>::SharedPtr velocity_report_sub_;
