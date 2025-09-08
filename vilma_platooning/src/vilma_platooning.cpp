@@ -88,7 +88,7 @@ namespace vilma_platooning
     void VilmaPlatooning::velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
     {
         following_vehicle_states_mutex_.lock();
-        following_vehicle_states_.speed = msg->longitudinal_velocity;
+        following_vehicle_states_.speed = msg->longitudinal_velocity * 3.6;
         following_vehicle_states_mutex_.unlock();
     }
 
