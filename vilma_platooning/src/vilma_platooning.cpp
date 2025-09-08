@@ -1,5 +1,7 @@
 #include "vilma_platooning/vilma_platooning.hpp"
 
+#include "haversine/haversine.h"
+
 #include <chrono>
 
 using namespace std::chrono_literals;
@@ -8,28 +10,51 @@ namespace vilma_platooning
 {
     VilmaPlatooning::VilmaPlatooning() : Node("vilma_platooning")
     {
-
-        platooning_state_ = false;
-
+        /// Placeholders
         using std::placeholders::_1;
 
-        platooning_timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(10),
-            std::bind(&VilmaPlatooning::platooning_callback, this));
+        /// Parameters
+        this->declare_parameter("platooning_period_ms", 10);
+        this->declare_parameter("hmi_update_period_ms", 500);
 
-        control_mode_command_cli_ = this->create_client<ControlModeCommand>("/control/control_mode_request");
+        /// Initialization
+        platooning_state_ = false;
+
+        /// ROS2 entities
+        rclcpp::SubscriptionOptions sub_options;
+
+        platooning_cb_group_ = this->create_callback_group(rclcpp::CallbackGroupType::Reentrant);
+
+        sub_options.callback_group = platooning_cb_group_;
+
+        platooning_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
+            std::bind(&VilmaPlatooning::platooning_callback, this),
+            platooning_cb_group_);
+
+        hmi_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(this->get_parameter("hmi_update_period_ms").as_int()),
+            std::bind(&VilmaPlatooning::hmi_update, this),
+            platooning_cb_group_);
+
+        control_mode_command_cli_ = this->create_client<ControlModeCommand>("/control/control_mode_request",
+                                                                            rmw_qos_profile_services_default, platooning_cb_group_);
 
         control_mode_report_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::ControlModeReport>(
-            "/vehicle/status/control_mode", 10, std::bind(&VilmaPlatooning::control_mode_callback, this, _1));
+            "/vehicle/status/control_mode", 10, std::bind(&VilmaPlatooning::control_mode_callback, this, _1),
+            sub_options);
 
         velocity_report_sub_ = this->create_subscription<autoware_vehicle_msgs::msg::VelocityReport>(
-            "/vehicle/status/velocity_status", 10, std::bind(&VilmaPlatooning::velocity_report_callback, this, _1));
+            "/vehicle/status/velocity_status", 10, std::bind(&VilmaPlatooning::velocity_report_callback, this, _1),
+            sub_options);
 
         cam_sub_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-            "/cam/in", 10, std::bind(&VilmaPlatooning::cam_callback, this, _1));
+            "/cam/in", 10, std::bind(&VilmaPlatooning::cam_callback, this, _1),
+            sub_options);
 
         platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
-            "/platooning/engage", 10, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1));
+            "/platooning/engage", 10, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
+            sub_options);
 
         hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", 1);
         hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", 1);
@@ -39,50 +64,89 @@ namespace vilma_platooning
 
     void VilmaPlatooning::control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg)
     {
+        vehicle_control_mode_mutex_.lock();
         vehicle_control_mode_ = msg->mode;
+        vehicle_control_mode_mutex_.unlock();
     }
 
     void VilmaPlatooning::velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
     {
+        following_vehicle_states_mutex_.lock();
         following_vehicle_states_.speed = msg->longitudinal_velocity;
+        following_vehicle_states_mutex_.unlock();
     }
 
     void VilmaPlatooning::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
     {
+
+        target_vehicle_states_mutex_.lock();
+
         target_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
         target_vehicle_states_.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
         target_vehicle_states_.latitude = etsi_its_cam_msgs::access::getLatitude(*msg);
+
+        following_vehicle_states_mutex_.lock();
+
+        target_vehicle_states_.distance = calculate_distance(target_vehicle_states_.longitude,
+                                                             target_vehicle_states_.longitude,
+                                                             following_vehicle_states_.longitude,
+                                                             following_vehicle_states_.longitude);
+
+        following_vehicle_states_mutex_.unlock();
+        target_vehicle_states_mutex_.unlock();
     }
 
     void VilmaPlatooning::platooning_engage_callback(const std_msgs::msg::UInt16::SharedPtr msg)
     {
-        bool _;
+        bool change_control_mode_result;
 
         switch (msg->data)
         {
         case VilmaPlatooning::PLATOONING_ENABLE:
 
+            platooning_state_mutex_.lock();
             platooning_state_ = VilmaPlatooning::PLATOONING_ENABLE;
-            _ = change_control_mode(ControlModeCommand::Request::AUTONOMOUS_VELOCITY_ONLY);
+            platooning_state_mutex_.unlock();
+
+            change_control_mode_result = change_control_mode(ControlModeCommand::Request::AUTONOMOUS_VELOCITY_ONLY);
             break;
 
         case VilmaPlatooning::PLATOONING_PAUSE:
 
+            platooning_state_mutex_.lock();
             platooning_state_ = VilmaPlatooning::PLATOONING_PAUSE;
-            _ = change_control_mode(ControlModeCommand::Request::MANUAL);
+            platooning_state_mutex_.unlock();
+
+            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
 
         case VilmaPlatooning::PLATOONING_DISABLE:
 
+            platooning_state_mutex_.lock();
             platooning_state_ = VilmaPlatooning::PLATOONING_DISABLE;
-            _ = change_control_mode(ControlModeCommand::Request::MANUAL);
+            platooning_state_mutex_.unlock();
+
+            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
 
         default:
+
+            platooning_state_mutex_.lock();
             platooning_state_ = VilmaPlatooning::PLATOONING_PAUSE;
+            platooning_state_mutex_.unlock();
+
             RCLCPP_WARN(this->get_logger(), "Unknow platooning engage command");
-            _ = change_control_mode(ControlModeCommand::Request::MANUAL);
+            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
+        }
+
+        if (change_control_mode_result)
+        {
+            RCLCPP_INFO(this->get_logger(), "Control mode changed sucessfully");
+        }
+        else
+        {
+            RCLCPP_ERROR(this->get_logger(), "Can't change control mode");
         }
     }
 
@@ -126,23 +190,36 @@ namespace vilma_platooning
     void VilmaPlatooning::hmi_update()
     {
 
+        int8_t platooning_state;
+
+        platooning_state_mutex_.unlock();
+        platooning_state = platooning_state_;
+        platooning_state_mutex_.unlock();
+
         std_msgs::msg::Float32 follower_speed_hmi;
+
+        following_vehicle_states_mutex_.lock();
         follower_speed_hmi.data = following_vehicle_states_.speed;
+        following_vehicle_states_mutex_.unlock();
+
         hmi_follower_speed_pub_->publish(follower_speed_hmi);
 
         std_msgs::msg::Float32 target_speed_hmi;
-        target_speed_hmi.data = target_vehicle_states_.speed;
-        hmi_follower_speed_pub_->publish(target_speed_hmi);
-
         std_msgs::msg::Float32 distance_hmi;
+
+        target_vehicle_states_mutex_.lock();
+        target_speed_hmi.data = target_vehicle_states_.speed;
         distance_hmi.data = target_vehicle_states_.distance;
+        target_vehicle_states_mutex_.unlock();
+
+        hmi_follower_speed_pub_->publish(target_speed_hmi);
         hmi_target_speed_pub_->publish(distance_hmi);
 
         std_msgs::msg::String status_hmi;
 
         std::string platooning_status;
 
-        switch (platooning_state_)
+        switch (platooning_state)
         {
         case VilmaPlatooning::PLATOONING_DISABLE:
             platooning_status = "Platooning disabled";
@@ -161,6 +238,8 @@ namespace vilma_platooning
 
         std::string control_mode_status;
 
+        vehicle_control_mode_mutex_.lock();
+
         switch (vehicle_control_mode_)
         {
         case autoware_vehicle_msgs::msg::ControlModeReport::AUTONOMOUS_VELOCITY_ONLY:
@@ -174,6 +253,8 @@ namespace vilma_platooning
             break;
         }
 
+        vehicle_control_mode_mutex_.unlock();
+
         status_hmi.data = std::string(platooning_status + " | " + control_mode_status);
 
         hmi_status_pub_->publish(status_hmi);
@@ -182,10 +263,26 @@ namespace vilma_platooning
     void VilmaPlatooning::platooning_callback()
     {
 
-        if (platooning_state_)
+        int8_t platooning_state;
+
+        platooning_state_mutex_.unlock();
+        platooning_state = platooning_state_;
+        platooning_state_mutex_.unlock();
+
+        if (platooning_state)
         {
+            vehicle_states_t follower_states;
+            vehicle_states_t target_states;
+
+            following_vehicle_states_mutex_.lock();
+            follower_states = following_vehicle_states_;
+            following_vehicle_states_mutex_.unlock();
+
+            target_vehicle_states_mutex_.lock();
+            target_states = target_vehicle_states_;
+            target_vehicle_states_mutex_.unlock();
+
             // ! Run platooning control
-        
         }
     }
 

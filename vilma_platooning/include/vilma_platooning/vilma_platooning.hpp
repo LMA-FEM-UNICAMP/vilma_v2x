@@ -1,6 +1,9 @@
 #ifndef VILMA_PLATOONING__VILMA_PLATOONING_HPP_
 #define VILMA_PLATOONING__VILMA_PLATOONING_HPP_
 
+#include <memory>
+#include <mutex>
+
 #include "rclcpp/rclcpp.hpp"
 
 #include "etsi_its_cam_msgs/msg/cam.hpp"
@@ -54,19 +57,25 @@ namespace vilma_platooning
     void platooning_callback();
 
   private:
-    /* Platooning control */
 
+    /// Platooning control
     int8_t platooning_state_;
     int8_t vehicle_control_mode_;
 
     vehicle_states_t target_vehicle_states_;
-
     vehicle_states_t following_vehicle_states_;
 
-    /* ROS objects */
+    /// Shared variables mutexes
+    std::mutex target_vehicle_states_mutex_;
+    std::mutex following_vehicle_states_mutex_;
+    std::mutex platooning_state_mutex_;
+    std::mutex vehicle_control_mode_mutex_;
+
+    /// ROS objects
+    rclcpp::CallbackGroup::SharedPtr platooning_cb_group_;
 
     rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_sub_;
-    
+
     rclcpp::Subscription<std_msgs::msg::UInt16>::SharedPtr platooning_engage_sub_;
 
     rclcpp::Subscription<autoware_vehicle_msgs::msg::ControlModeReport>::SharedPtr control_mode_report_sub_;
@@ -82,6 +91,7 @@ namespace vilma_platooning
     rclcpp::Client<ControlModeCommand>::SharedPtr control_mode_command_cli_;
 
     rclcpp::TimerBase::SharedPtr platooning_timer_;
+    rclcpp::TimerBase::SharedPtr hmi_timer_;
   };
 
 } // namespace vilma_platooning
