@@ -60,7 +60,7 @@ namespace vilma_platooning
             sub_options);
 
         follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-            "follower_gnss_sub_", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
+            "/gnss", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
             sub_options);
 
         control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
