@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 
 import rclpy
 from rclpy.node import Node
@@ -36,8 +37,9 @@ class carla_leader_controller(Node):
         self.gnss = NavSatFix()
         self.odom = Odometry()
         self.ackermann = AckermannDrive()
-        self.ackermann.speed = 10
+        self.ackermann.speed = 10.0
         self.ackermann.acceleration = 1.5
+        self.speed_increment = 5.0
         
         
     def odomCallback(self, msg):
@@ -62,7 +64,7 @@ class carla_leader_controller(Node):
         msg.cam.cam_parameters.basic_container.station_type.value = msg.cam.cam_parameters.basic_container.station_type.PASSENGER_CAR
         msg.cam.cam_parameters.basic_container.reference_position.latitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.latitude.ONE_MICRODEGREE_NORTH * 1e6 * self.gnss.latitude)
         msg.cam.cam_parameters.basic_container.reference_position.longitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.longitude.ONE_MICRODEGREE_EAST * 1e6 * self.gnss.longitude)
-        msg.cam.cam_parameters.basic_container.reference_position.altitude.altitude_value = int(1e2 * self.gnss.altitude) # ? Is altitude in cm?
+        msg.cam.cam_parameters.basic_container.reference_position.altitude.altitude_value.value = int(1e2 * self.gnss.altitude) # ? Is altitude in cm?
 
         basic_vehicle_container_high_frequency = BasicVehicleContainerHighFrequency()
         basic_vehicle_container_high_frequency.heading.heading_value.value = basic_vehicle_container_high_frequency.heading.heading_value.WGS84_NORTH
@@ -76,15 +78,17 @@ class carla_leader_controller(Node):
 
         self.publisher_cam.publish(msg)
         
-    def publishAckermannLeader(self):
-        
         self.leader_control.publish(self.ackermann)
         
+    def publishAckermannLeader(self):
+        
+        self.ackermann.speed = self.ackermann.speed + self.speed_increment
+        
         if(self.ackermann.speed >= 20.0):
-            self.ackermann.speed = self.ackermann.speed - 5
+            self.speed_increment = - 5.0
             
         elif(self.ackermann.speed <= 5.0):
-            self.ackermann.speed = self.ackermann.speed + 5
+            self.speed_increment = + 5.0
         
         
         

@@ -65,7 +65,9 @@ install(
 )
 
 install(
-  PROGRAMS scripts/simulate_target.py
+  PROGRAMS 
+  scripts/simulate_target.py
+  scripts/carla_leader_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
