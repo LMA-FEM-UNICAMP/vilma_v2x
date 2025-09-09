@@ -31,6 +31,8 @@ import utils
 
 from std_msgs.msg import Float32, UInt16, String
 
+from sensor_msgs.msg import NavSatFix
+
 from autoware_vehicle_msgs.msg import ControlModeReport
 from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_vehicle_msgs.srv import ControlModeCommand
@@ -42,7 +44,7 @@ class publisher_cam(Node):
         super().__init__("cam_publisher")
         topic = "/cam/in"
         self.publisher_cam = self.create_publisher(CAM, topic, 1)
-        self.timer = self.create_timer(1, self.publish)
+        # self.timer = self.create_timer(1, self.publish)
         
         self.publisher_control_mode = self.create_publisher(ControlModeReport, "/vehicle/status/control_mode", 1)
         
@@ -57,6 +59,9 @@ class publisher_cam(Node):
         self.control_action_sub = self.create_subscription(
             Control, '/control/control_command', self.controlCallback, 1)
         
+        self.control_action_sub = self.create_subscription(
+            NavSatFix, '/ego/sensor/gnss', self.gnssCallback, 1)
+        
         self.msg_control_mode = ControlModeReport()
         
         self.msg_control_mode.mode = 3
@@ -66,22 +71,8 @@ class publisher_cam(Node):
         self.target_longitude = 0.001
         self.target_latitude = 0.0
         
-    def controlCallback(self, msg):
-        self.get_logger().info('Speed setpoint: '+str(msg.longitudinal.velocity))
+    def gnssCallback(self, msggnss):
         
-        msg = Float32()
-        msg.data = 50.0
-        self.publisher_braking.publish(msg)
-        msg.data = 25.0
-        self.publisher_throttle.publish(msg)
-        
-    def control_mode_change_callback(self, request, response):
-        self.msg_control_mode.mode = request.mode
-        response.success = True
-        return response
-
-    def publish(self):
-
         msg = CAM()
 
         msg.header.protocol_version = 2
@@ -91,8 +82,8 @@ class publisher_cam(Node):
         msg.cam.generation_delta_time.value = int(utils.get_t_its(self.get_clock().now().nanoseconds) % 65536)
 
         msg.cam.cam_parameters.basic_container.station_type.value = msg.cam.cam_parameters.basic_container.station_type.PASSENGER_CAR
-        msg.cam.cam_parameters.basic_container.reference_position.latitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.latitude.ONE_MICRODEGREE_NORTH * 1e6 * self.target_latitude)
-        msg.cam.cam_parameters.basic_container.reference_position.longitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.longitude.ONE_MICRODEGREE_EAST * 1e6 * self.target_longitude)
+        msg.cam.cam_parameters.basic_container.reference_position.latitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.latitude.ONE_MICRODEGREE_NORTH * 1e6 * msggnss.latitude)
+        msg.cam.cam_parameters.basic_container.reference_position.longitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.longitude.ONE_MICRODEGREE_EAST * 1e6 * msggnss.longitude)
 
         basic_vehicle_container_high_frequency = BasicVehicleContainerHighFrequency()
         basic_vehicle_container_high_frequency.heading.heading_value.value = basic_vehicle_container_high_frequency.heading.heading_value.WGS84_NORTH
@@ -115,6 +106,24 @@ class publisher_cam(Node):
         
         self.follower_vel = self.follower_vel + 1.0
         self.target_longitude = self.target_longitude + 0.001
+        
+    def controlCallback(self, msg):
+        self.get_logger().info('Speed setpoint: '+str(msg.longitudinal.velocity))
+        
+        msg = Float32()
+        msg.data = 50.0
+        self.publisher_braking.publish(msg)
+        msg.data = 25.0
+        self.publisher_throttle.publish(msg)
+        
+    def control_mode_change_callback(self, request, response):
+        self.msg_control_mode.mode = request.mode
+        response.success = True
+        return response
+
+    def publish(self):
+        None
+        
 
 
 if __name__ == "__main__":

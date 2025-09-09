@@ -1,8 +1,9 @@
 #include "vilma_platooning/vilma_platooning.hpp"
 
-#include "haversine/haversine.h"
+#include <GeographicLib/Geodesic.hpp>
 
 #include <chrono>
+#include <iostream>
 
 using namespace std::chrono_literals;
 
@@ -60,7 +61,7 @@ namespace vilma_platooning
             sub_options);
 
         follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-            "/gnss", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
+            "/carla/leader_vehicle/leader/sensor/gnss", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
             sub_options);
 
         control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
@@ -103,10 +104,13 @@ namespace vilma_platooning
 
         following_vehicle_states_mutex_.lock();
 
-        target_vehicle_states_.distance = calculate_distance(target_vehicle_states_.longitude,
-                                                             target_vehicle_states_.longitude,
-                                                             following_vehicle_states_.longitude,
-                                                             following_vehicle_states_.longitude);
+        const GeographicLib::Geodesic &geod = GeographicLib::Geodesic::WGS84();
+
+        geod.Inverse(target_vehicle_states_.latitude,
+                     target_vehicle_states_.longitude,
+                     following_vehicle_states_.latitude,
+                     following_vehicle_states_.longitude,
+                     target_vehicle_states_.distance);
 
         following_vehicle_states_mutex_.unlock();
         target_vehicle_states_mutex_.unlock();

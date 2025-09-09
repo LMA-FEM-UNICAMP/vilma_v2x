@@ -17,21 +17,17 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
+find_package(GeographicLib REQUIRED)
 
 include_directories(
   libraries
 )
 
 add_library(vilma_platooning src/vilma_platooning.cpp)
-add_library(haversine libraries/haversine/haversine.cpp)
 target_compile_features(vilma_platooning PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
-target_compile_features(haversine PUBLIC c_std_99 cxx_std_17)  # Require C99 and C++17
 target_include_directories(vilma_platooning PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_include_directories(haversine PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libraries>
-  $<INSTALL_INTERFACE:libraries>)
 ament_target_dependencies(
   vilma_platooning
   "rclcpp"
@@ -49,7 +45,6 @@ ament_target_dependencies(
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(vilma_platooning PRIVATE "VILMA_PLATOONING_BUILDING_LIBRARY")
-target_compile_definitions(haversine PRIVATE "HAVERSINE_BUILDING_LIBRARY")
 
 install(
   DIRECTORY include/
@@ -61,18 +56,6 @@ install(
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin
-)
-install(
-  TARGETS haversine 
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
-)
-
-install(DIRECTORY libraries/haversine
-  DESTINATION include/${PROJECT_NAME}
-  FILES_MATCHING PATTERN "*.hpp"
 )
 
 install(
@@ -90,7 +73,7 @@ add_executable(vilma_platooning_node src/vilma_platooning_node.cpp)
 target_include_directories(vilma_platooning_node PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
-target_link_libraries(vilma_platooning_node vilma_platooning haversine)
+target_link_libraries(vilma_platooning_node vilma_platooning)
 
 install(TARGETS vilma_platooning_node
   DESTINATION lib/${PROJECT_NAME})
@@ -112,7 +95,6 @@ ament_export_include_directories(
 )
 ament_export_libraries(
   vilma_platooning
-  haversine
 )
 ament_export_targets(
   export_${PROJECT_NAME}

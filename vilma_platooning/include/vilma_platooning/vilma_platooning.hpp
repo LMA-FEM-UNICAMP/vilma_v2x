@@ -27,10 +27,10 @@ namespace vilma_platooning
 
   struct vehicle_states
   {
-    float speed;
-    float longitude;
-    float latitude;
-    float distance;
+    double speed;
+    double longitude;
+    double latitude;
+    double distance;
   } typedef vehicle_states_t;
 
   class VilmaPlatooning : public rclcpp::Node
