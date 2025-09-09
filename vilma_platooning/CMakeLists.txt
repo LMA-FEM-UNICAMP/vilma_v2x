@@ -17,6 +17,9 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
+find_package(carla_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
+find_package(ackermann_msgs REQUIRED)
 find_package(GeographicLib REQUIRED)
 
 include_directories(
@@ -37,6 +40,9 @@ ament_target_dependencies(
   "etsi_its_msgs_utils"
   "std_msgs"
   "sensor_msgs"
+  "carla_msgs"
+  "nav_msgs"
+  "ackermann_msgs"
   "autoware_control_msgs"
   "autoware_vehicle_msgs"
 
@@ -60,6 +66,11 @@ install(
 
 install(
   PROGRAMS scripts/simulate_target.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+install(
+  PROGRAMS scripts/carla_leader_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

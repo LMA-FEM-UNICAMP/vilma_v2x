@@ -221,7 +221,7 @@
       });
 
       speedTopic.subscribe((message) => {
-        document.getElementById('speedBox').innerText = message.data.toFixed(2) + ' km/h';
+        document.getElementById('speedBox').innerText = message.data.toFixed(2)*3.6 + ' km/h';
       });
 
     }

@@ -100,15 +100,12 @@ class publisher_cam(Node):
         
         self.publisher_control_mode.publish(self.msg_control_mode)
         
-        msg_vel = VelocityReport()
-        msg_vel.longitudinal_velocity = self.follower_vel
-        self.publisher_velocity.publish(msg_vel)
-        
-        self.follower_vel = self.follower_vel + 1.0
-        self.target_longitude = self.target_longitude + 0.001
-        
     def controlCallback(self, msg):
         self.get_logger().info('Speed setpoint: '+str(msg.longitudinal.velocity))
+        
+        msg_vel = VelocityReport()
+        msg_vel.longitudinal_velocity = msg.longitudinal.velocity
+        self.publisher_velocity.publish(msg_vel)
         
         msg = Float32()
         msg.data = 50.0

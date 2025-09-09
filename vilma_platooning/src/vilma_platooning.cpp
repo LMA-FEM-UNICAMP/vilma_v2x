@@ -89,7 +89,7 @@ namespace vilma_platooning
     void VilmaPlatooning::velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
     {
         following_vehicle_states_mutex_.lock();
-        following_vehicle_states_.speed = msg->longitudinal_velocity * 3.6;
+        following_vehicle_states_.speed = msg->longitudinal_velocity;
         following_vehicle_states_mutex_.unlock();
     }
 
@@ -282,6 +282,8 @@ namespace vilma_platooning
         if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE or platooning_state == VilmaPlatooning::PLATOONING_PAUSE)
         {
 
+            autoware_control_msgs::msg::Control control_action;
+
             double distance_setpoint = 10.0;
 
             vehicle_states_t follower_states;
@@ -301,11 +303,11 @@ namespace vilma_platooning
 
             double kp = 0.3;
 
-            double action = follower_states.speed - error * kp; // u = x_dot + e_dist*kp
+            double action = target_states.speed - error * kp; // u = x_dot + e_dist*kp
 
-            autoware_control_msgs::msg::Control control_action;
+            control_action.longitudinal.velocity = std::min(0.0, action);
 
-            control_action.longitudinal.velocity = action;
+            // * Publish desired speed, acceleration, jerk to vehicle in SI units
 
             if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE)
             {
