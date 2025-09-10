@@ -283,7 +283,7 @@ def generate_launch_description():
     objects_arg = launch.actions.DeclareLaunchArgument(
             name='objects_definition_file',
             default_value=get_package_share_directory(
-                'carla_autoware_bridge') + '/config/objects.json')  
+                'vilma_platooning') + '/config/carla_objects.json')  
 
     ld = LaunchDescription([
         host_arg,

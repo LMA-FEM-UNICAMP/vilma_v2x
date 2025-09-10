@@ -77,7 +77,7 @@ install(
 )
 
 install(DIRECTORY 
-        # config
+        config
         launch
         scripts
         DESTINATION share/${PROJECT_NAME})
