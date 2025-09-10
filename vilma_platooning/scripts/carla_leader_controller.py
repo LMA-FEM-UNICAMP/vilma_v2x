@@ -38,7 +38,7 @@ class carla_leader_controller(Node):
         self.odom = Odometry()
         self.ackermann = AckermannDrive()
         self.ackermann.speed = 10.0
-        self.ackermann.acceleration = 1.5
+        self.ackermann.acceleration = 0.0
         self.speed_increment = 5.0
         
         
