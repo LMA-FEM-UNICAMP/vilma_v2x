@@ -164,6 +164,9 @@
     let intervalId = null;
     let timeoutId = null;
 
+    const publish_period_ms = 500;
+    const timeout_ms = 2500;
+
     let rosServerIpPort = "143.106.207.89:9090";
 
     // ROS server object
@@ -293,7 +296,7 @@
           const msg = new ROSLIB.Message({ data: action });
           commandTopic.publish(msg);
           console.log(`Published: ${msg.data}`);
-        }, 500);
+        }, publish_period_ms);
       }
     }
 
@@ -309,7 +312,7 @@
         document.getElementById('statusBox').style.fontWeight = "bold";
         document.getElementById('statusBox').style.fontSize = "20px";
         console.log('Communication timeout!');
-      }, 5000);
+      }, timeout_ms);
     }
 
     loadConfigAndStart();
