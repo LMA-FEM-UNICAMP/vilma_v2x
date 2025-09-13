@@ -120,6 +120,16 @@ namespace vilma_platooning
     {
         bool change_control_mode_result;
 
+        platooning_state_mutex_.lock();
+        int8_t platooning_state = platooning_state_;
+        platooning_state_mutex_.unlock();
+        
+        // If the state is the same, do nothing
+        if (msg->data == platooning_state_)
+        {
+            return;
+        }
+
         switch (msg->data)
         {
         case VilmaPlatooning::PLATOONING_ENABLE:
