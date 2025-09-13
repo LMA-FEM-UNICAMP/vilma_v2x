@@ -56,12 +56,12 @@ namespace vilma_platooning
             "/cam/in", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
             sub_options);
 
-        platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
-            "/platooning/engage", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
-            sub_options);
-
         follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
             "/gnss", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
+            sub_options);
+
+        platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
+            "/hmi/engage", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
             sub_options);
 
         control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});

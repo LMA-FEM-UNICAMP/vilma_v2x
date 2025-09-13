@@ -19,18 +19,46 @@
       padding: 20px;
       display: flex;
       flex-direction: column;
+      /* overflow: hidden;  */
     }
 
-    .button {
-      width: 100px;
-      padding: 20px 0px;
-      margin: 5px;
+    .button_idle {
+      width: 150px;
+      padding: 25px 0px;
+      margin: 12px;
       background: #22314E;
       color: white;
       border: 2px solid #ddd;
       border-radius: 10px;
       font-size: 20px;
       font-weight: bold;
+      font-family: Lato, sans-serif;
+    }
+
+    .button_off {
+      width: 150px;
+      padding: 25px 0px;
+      margin: 12px;
+      background: #22314E;
+      color: #22314E;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      font-family: Lato, sans-serif;
+    }
+
+    .button_selected {
+      width: 150px;
+      padding: 25px 0px;
+      margin: 12px;
+      background: #0057f3;
+      color: white;
+      border: 2px solid #ddd;
+      border-radius: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      font-family: Lato, sans-serif;
     }
 
     .display-box {
@@ -72,6 +100,7 @@
 
     .content {
       flex: 1;
+      font-family: Lato, sans-serif;
     }
 
     .footer {
@@ -120,14 +149,19 @@
       <div class="value" id="brakingBox">-</div>
     </div>
 
-    <button class="button" onclick="sendCommand(2)">Start</button>
-    <button class="button" onclick="sendCommand(1)">Stop</button>
-    <button class="button" onclick="sendCommand(3)">Pause</button>
+    <button id="button_start" class="button_off" onclick="sendCommand(2)">Start</button>
+    <button id="button_stop" class="button_off" onclick="sendCommand(1)">Stop</button>
 
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
   <script>
+
+    const button_start = document.getElementById("button_start");
+    const button_stop = document.getElementById("button_stop");
+
+    let ros_connected = false;
+    let intervalId = null;
 
     let rosServerIpPort = "143.106.207.89:9090";
 
@@ -172,7 +206,7 @@
       // Configure publishers
       commandTopic = new ROSLIB.Topic({
         ros: ros,
-        name: '/platooning/engage',
+        name: '/hmi/engage',
         messageType: 'std_msgs/UInt16'
       });
 
@@ -206,6 +240,11 @@
       // Subscribers callbacks
       statusTopic.subscribe((message) => {
         document.getElementById('statusBox').innerText = message.data;
+        if (!ros_connected) {
+          button_start.className = "button_idle";
+          button_stop.className = "button_idle";
+        }
+        ros_connected = true;
       });
 
       distanceTopic.subscribe((message) => {
@@ -221,7 +260,22 @@
       });
 
       speedTopic.subscribe((message) => {
-        document.getElementById('speedBox').innerText = message.data.toFixed(2)*3.6 + ' km/h';
+        document.getElementById('speedBox').innerText = message.data.toFixed(2) * 3.6 + ' km/h';
+      });
+
+
+      button_start.addEventListener("click", function () {
+        if (ros_connected) {
+          button_start.className = "button_selected";
+          button_stop.className = "button_idle";
+        }
+      });
+
+      button_stop.addEventListener("click", function () {
+        if (ros_connected) {
+          button_stop.className = "button_selected";
+          button_start.className = "button_idle";
+        }
       });
 
     }
@@ -229,8 +283,16 @@
 
     // Publish function
     function sendCommand(action) {
-      const msg = new ROSLIB.Message({ data: action });
-      commandTopic.publish(msg);
+      if (ros_connected) {
+        if (intervalId !== null) {
+          clearInterval(intervalId);
+        }
+        intervalId = setInterval(() => {
+          const msg = new ROSLIB.Message({ data: action });
+          commandTopic.publish(msg);
+          console.log(`Published: ${msg.data}`);
+        }, 500);
+      }
     }
 
     loadConfigAndStart();
