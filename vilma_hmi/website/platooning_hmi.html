@@ -162,6 +162,7 @@
 
     let ros_connected = false;
     let intervalId = null;
+    let timeoutId = null;
 
     let rosServerIpPort = "143.106.207.89:9090";
 
@@ -239,6 +240,7 @@
 
       // Subscribers callbacks
       statusTopic.subscribe((message) => {
+        resetTimeout();
         document.getElementById('statusBox').innerText = message.data;
         if (!ros_connected) {
           button_start.className = "button_idle";
@@ -293,6 +295,21 @@
           console.log(`Published: ${msg.data}`);
         }, 500);
       }
+    }
+
+    function resetTimeout() {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        document.getElementById('statusBox').style.cssText = "";
+      }
+
+      timeoutId = setTimeout(() => {
+        document.getElementById('statusBox').innerText = "Communication timeout!!!";
+        document.getElementById('statusBox').style.color = "red";
+        document.getElementById('statusBox').style.fontWeight = "bold";
+        document.getElementById('statusBox').style.fontSize = "20px";
+        console.log('Communication timeout!');
+      }, 5000);
     }
 
     loadConfigAndStart();
