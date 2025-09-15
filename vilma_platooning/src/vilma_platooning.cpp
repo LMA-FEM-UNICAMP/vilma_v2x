@@ -125,7 +125,7 @@ namespace vilma_platooning
         platooning_state_mutex_.unlock();
         
         // If the state is the same, do nothing
-        if (msg->data == platooning_state_)
+        if (msg->data == platooning_state)
         {
             return;
         }
@@ -169,6 +169,8 @@ namespace vilma_platooning
             change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
         }
+
+        (void)change_control_mode_result;
     }
 
     bool VilmaPlatooning::change_control_mode(const uint8_t control_mode)
