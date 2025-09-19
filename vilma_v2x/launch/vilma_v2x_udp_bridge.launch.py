@@ -22,25 +22,27 @@ def generate_launch_description():
         package="etsi_its_conversion",
         executable="etsi_its_conversion_node",
         namespace="v2x",
-        name="etsi_its_conversion",
+        name="etsi_parser",
         parameters=[params_etsi],
-        remappings=[('/v2x/etsi_its_conversion/udp/in', '/udp_read')],
-        output='screen')
+        remappings=[('/v2x/etsi_parser/udp/in', '/v2x/udp_read')],
+        output='both')
 
     udp_driver_sender = Node(
         package='udp_driver',
         executable='udp_sender_node_exe',
-        name='udp_sender_node',
+        namespace="v2x",
+        name='udp_sender',
         parameters=[params_udp_sender],
-        remappings=[('/udp_write', '/v2x/etsi_its_conversion/udp/out')],
-        output='screen')
+        remappings=[('/v2x/udp_write', '/v2x/etsi_parser/udp/out')],
+        output='both')
 
     udp_driver_receiver = Node(
         package='udp_driver',
         executable='udp_receiver_node_exe',
-        name='udp_receiver_node',
+        namespace="v2x",
+        name='udp_receiver',
         parameters=[params_udp_receiver],
-        output='screen')
+        output='both')
     
     udp_lifecycle_transitions_script = ExecuteProcess(
             cmd=['zsh', udp_lifecycle_transitions_script_path],

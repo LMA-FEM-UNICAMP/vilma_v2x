@@ -1,4 +1,4 @@
-ros2 lifecycle set /udp_receiver_node 1
-ros2 lifecycle set /udp_sender_node 1
-ros2 lifecycle set /udp_receiver_node 3
-ros2 lifecycle set /udp_sender_node 3
+ros2 lifecycle set /v2x/udp_receiver 1
+ros2 lifecycle set /v2x/udp_sender 1
+ros2 lifecycle set /v2x/udp_receiver 3
+ros2 lifecycle set /v2x/udp_sender 3
