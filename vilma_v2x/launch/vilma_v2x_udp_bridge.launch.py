@@ -24,6 +24,7 @@ def generate_launch_description():
         namespace="v2x",
         name="etsi_its_conversion",
         parameters=[params_etsi],
+        remappings=[('/v2x/etsi_its_conversion/udp/in', '/udp_read')],
         output='screen')
 
     udp_driver_sender = Node(
@@ -31,7 +32,7 @@ def generate_launch_description():
         executable='udp_sender_node_exe',
         name='udp_sender_node',
         parameters=[params_udp_sender],
-        remappings=[('/udp_read', '/v2x/etsi_its_conversion/udp/in')],
+        remappings=[('/udp_write', '/v2x/etsi_its_conversion/udp/out')],
         output='screen')
 
     udp_driver_receiver = Node(
@@ -39,7 +40,6 @@ def generate_launch_description():
         executable='udp_receiver_node_exe',
         name='udp_receiver_node',
         parameters=[params_udp_receiver],
-        remappings=[('/udp_write', '/v2x/etsi_its_conversion/udp/out')],
         output='screen')
     
     udp_lifecycle_transitions_script = ExecuteProcess(
