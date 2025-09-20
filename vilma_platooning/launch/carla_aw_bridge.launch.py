@@ -24,6 +24,7 @@ from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, Opaq
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
 
 class objectParser():
     def __init__(self, configPath):
@@ -220,12 +221,20 @@ def launch_setup(context, *args, **kwargs):
                 'role_name': 'leader_vehicle'
             }.items())
     
+    vilma_platooning = Node(
+        package="vilma_platooning",
+        executable="vilma_platooning_node",
+        namespace="",
+        name="vilma_platooning",
+        output='both')
+    
     return [carla_ros_bridge_launch,
             carla_aw_bridge_launch,
             spawn_ego_vehicle,
             manual_control_window,
             ackermann_launch_ego,
-            ackermann_launch_leader]
+            ackermann_launch_leader,
+            vilma_platooning]
 
 def generate_launch_description():
     host_arg = DeclareLaunchArgument(

@@ -53,7 +53,7 @@ namespace vilma_platooning
             sub_options);
 
         cam_sub_ = this->create_subscription<etsi_its_cam_msgs::msg::CAM>(
-            "/cam/in", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
+            "/cam/out", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
             sub_options);
 
         follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(

@@ -42,9 +42,8 @@ class publisher_cam(Node):
     def __init__(self):
 
         super().__init__("cam_publisher")
-        topic = "/cam/in"
-        self.publisher_cam = self.create_publisher(CAM, topic, 1)
-        # self.timer = self.create_timer(1, self.publish)
+        
+        self.publisher_cam = self.create_publisher(CAM, "/cam/out", 1)
         
         self.publisher_control_mode = self.create_publisher(ControlModeReport, "/vehicle/status/control_mode", 1)
         
@@ -117,9 +116,6 @@ class publisher_cam(Node):
         self.msg_control_mode.mode = request.mode
         response.success = True
         return response
-
-    def publish(self):
-        None
         
 
 

@@ -32,7 +32,7 @@ class carla_leader_controller(Node):
             Odometry, '/carla/leader_vehicle/odometry', self.odomCallback, 1)
         
         self.publisher_cam = self.create_publisher(
-            CAM, "/cam/in", 1)
+            CAM, "/cam/out", 1)
         
         self.gnss = NavSatFix()
         self.odom = Odometry()
