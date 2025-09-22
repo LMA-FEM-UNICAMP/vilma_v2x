@@ -15,7 +15,7 @@
       # - vam_ts
     udp2ros_etsi_types:
       - cam
-      - cam_ts
+      # - cam_ts
       # - cpm_ts
       # - denm
       # - mapem_ts
