@@ -221,10 +221,18 @@ def launch_setup(context, *args, **kwargs):
                 'role_name': 'leader_vehicle'
             }.items())
     
+    carla_leader_controller = Node(
+        package="vilma_platooning",
+        executable="carla_leader_controller.py",
+        namespace="",
+        name="vilma_platooning",
+        output='both')
+    
     vilma_platooning = Node(
         package="vilma_platooning",
         executable="vilma_platooning_node",
         namespace="",
+        remappings=[('/cam/out', '/v2x_obu_01/etsi_parser_obu_01/cam/out')],
         name="vilma_platooning",
         output='both')
     
@@ -234,6 +242,7 @@ def launch_setup(context, *args, **kwargs):
             manual_control_window,
             ackermann_launch_ego,
             ackermann_launch_leader,
+            carla_leader_controller,
             vilma_platooning]
 
 def generate_launch_description():
