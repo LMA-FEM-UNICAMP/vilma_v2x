@@ -1,6 +1,0 @@
-vilma_hmi:
-  ros__parameters:
-    server_ip: "143.106.207.89"
-    server_port: "8000"
-    rosbridge_port: "9090"
-    index: "platooning_hmi.html"
