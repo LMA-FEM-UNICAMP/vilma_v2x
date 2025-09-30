@@ -131,17 +131,17 @@
 
     <div class="display-box">
       <div class="title">Speed</div>
-      <div class="value" id="speedBox">34.3 km/h</div>
+      <div class="value" id="speedBox">- km/h</div>
     </div>
 
     <div class="display-box">
       <div class="title">Throttle</div>
-      <div class="value" id="throttleBox">90%</div>
+      <div class="value" id="throttleBox">- %</div>
     </div>
 
     <div class="display-box">
       <div class="title">Braking</div>
-      <div class="value" id="brakingBox">-</div>
+      <div class="value" id="brakingBox">- %</div>
     </div>
 
   </div>
@@ -163,9 +163,6 @@
 
     // ROS server object
     let ros = new ROSLIB.Ros();
-
-    // Publisher for commands
-    let commandTopic = new ROSLIB.Topic();
 
     // Subscriber for status updates
     let speedTopic = new ROSLIB.Topic();
@@ -198,11 +195,6 @@
       ros.on('close', () => console.log('Connection closed.'));
 
       // Configure subscribers
-      statusTopic = new ROSLIB.Topic({
-        ros: ros,
-        name: '/hmi/status',
-        messageType: 'std_msgs/String'
-      });
       speedTopic = new ROSLIB.Topic({
         ros: ros,
         name: '/hmi/speed',
@@ -220,11 +212,6 @@
       });
 
       // Subscribers callbacks
-
-      statusTopic.subscribe((message) => {
-        resetTimeout();
-        document.getElementById('statusBox').innerText = message.data;
-      });
 
       throttleTopic.subscribe((message) => {
         document.getElementById('throttleBox').innerText = message.data.toFixed(2) + ' %';
