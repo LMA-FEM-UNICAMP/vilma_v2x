@@ -146,7 +146,7 @@
 
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/roslib/build/roslib.min.js"></script>
+  <script src="/roslib.min.js"></script>
   <script>
 
     const button_start = document.getElementById("button_start");
@@ -159,7 +159,7 @@
     const publish_period_ms = 500;
     const timeout_ms = 2500;
 
-    let rosServerIpPort = "143.106.207.89:9090";
+    let rosServerIpPort = "192.168.140.4:9090";
 
     // ROS server object
     let ros = new ROSLIB.Ros();
@@ -180,11 +180,11 @@
         console.error("Error loading config:", err);
       }
 
-      // Get ROSBridge server IP and port
-      console.log("rosServerIpPort" + rosServerIpPort);
-
       // Connect to ROS bridge
       let rosServerUrl = "ws://" + rosServerIpPort;
+
+      // Get ROSBridge server IP and port
+      console.log("rosServerIpPort: " + rosServerUrl);
 
       ros = new ROSLIB.Ros({
         url: rosServerUrl
@@ -211,6 +211,9 @@
         messageType: 'std_msgs/Float32'
       });
 
+
+        document.getElementById('statusBox').innerText = rosServerUrl;
+
       // Subscribers callbacks
 
       throttleTopic.subscribe((message) => {
@@ -219,7 +222,7 @@
       });
 
       brakingTopic.subscribe((message) => {
-        document.getElementById('brakingBox').innerText = message.data.toFixed(2) + ' %';
+        document.getElementById('brakingBox').innerText = message.data.toFixed(2);
         resetTimeout();
       });
 
@@ -234,7 +237,7 @@
       if (timeoutId) {
         clearTimeout(timeoutId);
         document.getElementById('statusBox').style.cssText = "";
-        document.getElementById('statusBox').innerText = "Receiving data...";
+        // document.getElementById('statusBox').innerText = "Receiving data...";
       }
 
       timeoutId = setTimeout(() => {
