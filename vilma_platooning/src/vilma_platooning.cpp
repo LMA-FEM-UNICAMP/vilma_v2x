@@ -77,6 +77,7 @@ namespace vilma_platooning
         following_vehicle_states_.longitude = msg->longitude;
         following_vehicle_states_.latitude = msg->latitude;
         following_vehicle_states_mutex_.unlock();
+        // TODO Heading?
     }
 
     void VilmaPlatooning::control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg)
@@ -98,19 +99,16 @@ namespace vilma_platooning
 
         target_vehicle_states_mutex_.lock();
 
-        target_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
         target_vehicle_states_.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
         target_vehicle_states_.latitude = etsi_its_cam_msgs::access::getLatitude(*msg);
+        target_vehicle_states_.heading = etsi_its_cam_msgs::access::getHeading(*msg);
+        target_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
+        target_vehicle_states_.acceleration = etsi_its_cam_msgs::access::getLongitudinalAcceleration(*msg);
 
         following_vehicle_states_mutex_.lock();
 
-        const GeographicLib::Geodesic &geod = GeographicLib::Geodesic::WGS84();
-
-        geod.Inverse(target_vehicle_states_.latitude,
-                     target_vehicle_states_.longitude,
-                     following_vehicle_states_.latitude,
-                     following_vehicle_states_.longitude,
-                     target_vehicle_states_.distance);
+        // Compute distance between vehicles
+        getDistance(target_vehicle_states_, following_vehicle_states_);
 
         following_vehicle_states_mutex_.unlock();
         target_vehicle_states_mutex_.unlock();
@@ -123,7 +121,7 @@ namespace vilma_platooning
         platooning_state_mutex_.lock();
         int8_t platooning_state = platooning_state_;
         platooning_state_mutex_.unlock();
-        
+
         // If the state is the same, do nothing
         if (msg->data == platooning_state)
         {
@@ -209,6 +207,22 @@ namespace vilma_platooning
             RCLCPP_WARN(this->get_logger(), "Control mode changed unsuccessful.");
             return 0;
         }
+    }
+
+    void VilmaPlatooning::getDistance(vehicle_states_t &leader_vehicle, vehicle_states_t &following_vehicle)
+    {
+        const GeographicLib::Geodesic &geod = GeographicLib::Geodesic::WGS84();
+
+        geod.Inverse(leader_vehicle.latitude,
+                     leader_vehicle.longitude,
+                     following_vehicle.latitude,
+                     following_vehicle.longitude,
+                     leader_vehicle.distance);
+
+        leader_vehicle.lateral_distance = 0.0; // TODO
+        leader_vehicle.longitudinal_distance = 0.0; // TODO
+
+        return;
     }
 
     void VilmaPlatooning::hmi_update()
@@ -318,6 +332,7 @@ namespace vilma_platooning
             double action = target_states.speed - error * kp; // u = x_dot + e_dist*kp
 
             control_action.longitudinal.velocity = std::min(0.0, action);
+            control_action.longitudinal.acceleration = target_states.acceleration;
 
             // * Publish desired speed, acceleration, jerk to vehicle in SI units
 

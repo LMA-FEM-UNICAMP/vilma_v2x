@@ -27,9 +27,13 @@ namespace vilma_platooning
 
   struct vehicle_states
   {
-    double speed;
     double longitude;
     double latitude;
+    double heading;
+    double speed;
+    double acceleration;
+    double lateral_distance;
+    double longitudinal_distance;
     double distance;
   } typedef vehicle_states_t;
 
@@ -57,10 +61,11 @@ namespace vilma_platooning
 
     void follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
 
+    void getDistance( vehicle_states_t &leader_vehicle, vehicle_states_t &following_vehicle);
+
     void platooning_callback();
 
   private:
-
     /// Platooning control
     int8_t platooning_state_;
     int8_t vehicle_control_mode_;
