@@ -19,7 +19,7 @@ namespace vilma_platooning
         this->declare_parameter("hmi_update_period_ms", 500);
 
         /// Initialization
-        platooning_state_ = false;
+        platooning_state_.store(0);
 
         following_vehicle_states_.latitude = 0.0;
         following_vehicle_states_.longitude = 0.0;
@@ -64,11 +64,22 @@ namespace vilma_platooning
             "/hmi/engage", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::platooning_engage_callback, this, _1),
             sub_options);
 
+        set_distance_sub_ = this->create_subscription<std_msgs::msg::Float32>(
+            "/hmi/set_distance", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::set_distance_callback, this, _1),
+            sub_options);
+
         control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
         hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", rclcpp::QoS{1});
         hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", rclcpp::QoS{1});
         hmi_distance_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/distance", rclcpp::QoS{1});
         hmi_status_pub_ = this->create_publisher<std_msgs::msg::String>("/hmi/status", rclcpp::QoS{1});
+
+        distance_setpoint_.store(10.0);
+    }
+
+    void VilmaPlatooning::set_distance_callback(const std_msgs::msg::Float32::SharedPtr msg)
+    {
+        distance_setpoint_.store(msg->data);
     }
 
     void VilmaPlatooning::follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
@@ -82,9 +93,7 @@ namespace vilma_platooning
 
     void VilmaPlatooning::control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg)
     {
-        vehicle_control_mode_mutex_.lock();
-        vehicle_control_mode_ = msg->mode;
-        vehicle_control_mode_mutex_.unlock();
+        vehicle_control_mode_.store(msg->mode);
     }
 
     void VilmaPlatooning::velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
@@ -96,6 +105,8 @@ namespace vilma_platooning
 
     void VilmaPlatooning::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
     {
+
+        RCLCPP_INFO(this->get_logger(), "CAM received");
 
         target_vehicle_states_mutex_.lock();
 
@@ -118,12 +129,8 @@ namespace vilma_platooning
     {
         bool change_control_mode_result;
 
-        platooning_state_mutex_.lock();
-        int8_t platooning_state = platooning_state_;
-        platooning_state_mutex_.unlock();
-
         // If the state is the same, do nothing
-        if (msg->data == platooning_state)
+        if (msg->data == platooning_state_.load())
         {
             return;
         }
@@ -132,39 +139,25 @@ namespace vilma_platooning
         {
         case VilmaPlatooning::PLATOONING_ENABLE:
 
-            platooning_state_mutex_.lock();
-            platooning_state_ = VilmaPlatooning::PLATOONING_ENABLE;
-            platooning_state_mutex_.unlock();
+            platooning_state_.store(VilmaPlatooning::PLATOONING_ENABLE);
 
             change_control_mode_result = change_control_mode(ControlModeCommand::Request::AUTONOMOUS_VELOCITY_ONLY);
             break;
 
-        case VilmaPlatooning::PLATOONING_PAUSE:
-
-            platooning_state_mutex_.lock();
-            platooning_state_ = VilmaPlatooning::PLATOONING_PAUSE;
-            platooning_state_mutex_.unlock();
-
-            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
-            break;
-
         case VilmaPlatooning::PLATOONING_DISABLE:
 
-            platooning_state_mutex_.lock();
-            platooning_state_ = VilmaPlatooning::PLATOONING_DISABLE;
-            platooning_state_mutex_.unlock();
+            platooning_state_.store(VilmaPlatooning::PLATOONING_DISABLE);
 
             change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
 
         default:
 
-            platooning_state_mutex_.lock();
-            platooning_state_ = VilmaPlatooning::PLATOONING_PAUSE;
-            platooning_state_mutex_.unlock();
+            platooning_state_.store(VilmaPlatooning::PLATOONING_DISABLE);
+
+            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
 
             RCLCPP_WARN(this->get_logger(), "Unknow platooning engage command");
-            change_control_mode_result = change_control_mode(ControlModeCommand::Request::MANUAL);
             break;
         }
 
@@ -219,7 +212,7 @@ namespace vilma_platooning
                      following_vehicle.longitude,
                      leader_vehicle.distance);
 
-        leader_vehicle.lateral_distance = 0.0; // TODO
+        leader_vehicle.lateral_distance = 0.0;      // TODO
         leader_vehicle.longitudinal_distance = 0.0; // TODO
 
         return;
@@ -227,13 +220,6 @@ namespace vilma_platooning
 
     void VilmaPlatooning::hmi_update()
     {
-
-        int8_t platooning_state;
-
-        platooning_state_mutex_.unlock();
-        platooning_state = platooning_state_;
-        platooning_state_mutex_.unlock();
-
         std_msgs::msg::Float32 follower_speed_hmi;
 
         following_vehicle_states_mutex_.lock();
@@ -255,13 +241,10 @@ namespace vilma_platooning
 
         std::string platooning_status;
 
-        switch (platooning_state)
+        switch (platooning_state_.load())
         {
         case VilmaPlatooning::PLATOONING_DISABLE:
             platooning_status = "Platooning disabled";
-            break;
-        case VilmaPlatooning::PLATOONING_PAUSE:
-            platooning_status = "Platooning paused";
             break;
         case VilmaPlatooning::PLATOONING_ENABLE:
             platooning_status = "Platooning enabled";
@@ -274,9 +257,7 @@ namespace vilma_platooning
 
         std::string control_mode_status;
 
-        vehicle_control_mode_mutex_.lock();
-
-        switch (vehicle_control_mode_)
+        switch (vehicle_control_mode_.load())
         {
         case autoware_vehicle_msgs::msg::ControlModeReport::AUTONOMOUS_VELOCITY_ONLY:
             control_mode_status = "Velocity control active";
@@ -289,8 +270,6 @@ namespace vilma_platooning
             break;
         }
 
-        vehicle_control_mode_mutex_.unlock();
-
         status_hmi.data = std::string(platooning_status + " | " + control_mode_status);
 
         hmi_status_pub_->publish(status_hmi);
@@ -298,48 +277,37 @@ namespace vilma_platooning
 
     void VilmaPlatooning::platooning_callback()
     {
+        autoware_control_msgs::msg::Control control_action;
 
-        int8_t platooning_state;
+        vehicle_states_t follower_states;
+        vehicle_states_t target_states;
 
-        platooning_state_mutex_.unlock();
-        platooning_state = platooning_state_;
-        platooning_state_mutex_.unlock();
+        following_vehicle_states_mutex_.lock();
+        follower_states = following_vehicle_states_;
+        following_vehicle_states_mutex_.unlock();
 
-        if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE or platooning_state == VilmaPlatooning::PLATOONING_PAUSE)
+        target_vehicle_states_mutex_.lock();
+        target_states = target_vehicle_states_;
+        target_vehicle_states_mutex_.unlock();
+
+        // ! Run platooning control
+
+        double error = distance_setpoint_.load() - target_states.distance;
+
+        double kp = 0.3;
+
+        double action = target_states.speed - error * kp; // u = x_dot - e_dist*kp
+
+        control_action.longitudinal.velocity = std::min(0.0, action);
+        // control_action.longitudinal.acceleration = target_states.acceleration;
+
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
+
+        // * Publish desired speed, acceleration, jerk to vehicle in SI units
+
+        if (platooning_state_.load() == VilmaPlatooning::PLATOONING_ENABLE)
         {
-
-            autoware_control_msgs::msg::Control control_action;
-
-            double distance_setpoint = 10.0;
-
-            vehicle_states_t follower_states;
-            vehicle_states_t target_states;
-
-            following_vehicle_states_mutex_.lock();
-            follower_states = following_vehicle_states_;
-            following_vehicle_states_mutex_.unlock();
-
-            target_vehicle_states_mutex_.lock();
-            target_states = target_vehicle_states_;
-            target_vehicle_states_mutex_.unlock();
-
-            // ! Run platooning control
-
-            double error = distance_setpoint - target_states.distance;
-
-            double kp = 0.3;
-
-            double action = target_states.speed - error * kp; // u = x_dot + e_dist*kp
-
-            control_action.longitudinal.velocity = std::min(0.0, action);
-            control_action.longitudinal.acceleration = target_states.acceleration;
-
-            // * Publish desired speed, acceleration, jerk to vehicle in SI units
-
-            if (platooning_state == VilmaPlatooning::PLATOONING_ENABLE)
-            {
-                control_commmand_pub_->publish(control_action);
-            }
+            control_commmand_pub_->publish(control_action);
         }
     }
 

@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <mutex>
+#include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
 
@@ -43,7 +44,7 @@ namespace vilma_platooning
   public:
     constexpr static uint8_t PLATOONING_DISABLE = 1; // Do nothing
     constexpr static uint8_t PLATOONING_ENABLE = 2;  // Start platooning
-    constexpr static uint8_t PLATOONING_PAUSE = 3;   // Run platooning but disengage vehicle
+    constexpr static uint8_t PLATOONING_PAUSE = 3;   // Run platooning but disengage vehicle (LEGACY)
 
     VilmaPlatooning();
 
@@ -55,29 +56,31 @@ namespace vilma_platooning
 
     void platooning_engage_callback(const std_msgs::msg::UInt16::SharedPtr msg);
 
+    void set_distance_callback(const std_msgs::msg::Float32::SharedPtr msg);
+
     void control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg);
 
     void velocity_report_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg);
 
     void follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg);
 
-    void getDistance( vehicle_states_t &leader_vehicle, vehicle_states_t &following_vehicle);
+    void getDistance(vehicle_states_t &leader_vehicle, vehicle_states_t &following_vehicle);
 
     void platooning_callback();
 
   private:
     /// Platooning control
-    int8_t platooning_state_;
-    int8_t vehicle_control_mode_;
+    std::atomic<uint8_t> platooning_state_;
+    std::atomic<uint8_t> vehicle_control_mode_;
 
     vehicle_states_t target_vehicle_states_;
     vehicle_states_t following_vehicle_states_;
 
+    std::atomic<double> distance_setpoint_;
+
     /// Shared variables mutexes
     std::mutex target_vehicle_states_mutex_;
     std::mutex following_vehicle_states_mutex_;
-    std::mutex platooning_state_mutex_;
-    std::mutex vehicle_control_mode_mutex_;
 
     /// ROS objects
     rclcpp::CallbackGroup::SharedPtr platooning_cb_group_;
@@ -95,6 +98,8 @@ namespace vilma_platooning
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr hmi_follower_speed_pub_;
     rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr hmi_distance_pub_;
     rclcpp::Publisher<std_msgs::msg::String>::SharedPtr hmi_status_pub_;
+
+    rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr set_distance_sub_;
 
     rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr control_commmand_pub_;
 
