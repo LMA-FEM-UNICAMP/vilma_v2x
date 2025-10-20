@@ -31,10 +31,10 @@ namespace vilma_platooning
 
         sub_options.callback_group = platooning_cb_group_;
 
-        platooning_timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
-            std::bind(&VilmaPlatooning::platooning_callback, this),
-            platooning_cb_group_);
+        // platooning_timer_ = this->create_wall_timer(
+        //     std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
+        //     std::bind(&VilmaPlatooning::platooning_callback, this),
+        //     platooning_cb_group_);
 
         hmi_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(this->get_parameter("hmi_update_period_ms").as_int()),
@@ -123,6 +123,8 @@ namespace vilma_platooning
 
         following_vehicle_states_mutex_.unlock();
         target_vehicle_states_mutex_.unlock();
+
+        platooning_callback();
     }
 
     void VilmaPlatooning::platooning_engage_callback(const std_msgs::msg::UInt16::SharedPtr msg)
