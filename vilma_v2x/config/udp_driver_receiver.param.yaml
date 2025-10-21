@@ -1,4 +1,4 @@
 /**/*:
   ros__parameters:
-    ip: "143.106.207.89"         # same as ItsUdpBtpIfIndHostName
-    port: 4402              # same as ItsUdpBtpIfIndPort
+    ip: "192.168.140.4"         # same as ItsUdpBtpIfIndHostName
+    port: 4400              # same as ItsUdpBtpIfIndPort

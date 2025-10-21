@@ -32,8 +32,8 @@ def generate_launch_description():
         executable='udp_sender_node_exe',
         namespace="v2x",
         name='udp_sender',
-        parameters=[{'ip': '143.106.207.85'},{'port': 4403}],
-        # parameters=[params_udp_sender],
+        # parameters=[{'ip': '143.106.207.85'},{'port': 4403}],
+        parameters=[params_udp_sender],
         remappings=[('/v2x/udp_write', '/v2x/etsi_parser/udp/out')],
         output='both')
 
@@ -42,8 +42,8 @@ def generate_launch_description():
         executable='udp_receiver_node_exe',
         namespace="v2x",
         name='udp_receiver',
-        parameters=[{'ip': '143.106.207.89'},{'port': 4402}],
-        # parameters=[params_udp_receiver],
+        # parameters=[{'ip': '143.106.207.89'},{'port': 4402}],
+        parameters=[params_udp_receiver],
         output='both')
     
     udp_lifecycle_transitions_script = ExecuteProcess(

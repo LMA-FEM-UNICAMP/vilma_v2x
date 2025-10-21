@@ -86,6 +86,7 @@ namespace vilma_platooning
     rclcpp::CallbackGroup::SharedPtr platooning_cb_group_;
 
     rclcpp::Subscription<etsi_its_cam_msgs::msg::CAM>::SharedPtr cam_sub_;
+    rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr leader_gnss_pub_;
 
     rclcpp::Subscription<std_msgs::msg::UInt16>::SharedPtr platooning_engage_sub_;
 

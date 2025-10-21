@@ -16,7 +16,8 @@ def generate_launch_description():
         package="vilma_platooning",
         executable="vilma_platooning_node",
         namespace="",
-        # remappings=[('/cam/out', '/v2x/etsi_parser/cam/out')],
+        remappings=[('/cam/out', '/v2x/etsi_parser/cam/out')],
+        parameters=[{'gnss_topic': '/obu/fix'}],
         name="vilma_platooning",
         output='both')
     

@@ -17,6 +17,7 @@ namespace vilma_platooning
         /// Parameters
         this->declare_parameter("platooning_period_ms", 10);
         this->declare_parameter("hmi_update_period_ms", 500);
+        this->declare_parameter("gnss_topic", "/gnss");
 
         /// Initialization
         platooning_state_.store(0);
@@ -56,8 +57,10 @@ namespace vilma_platooning
             "/cam/out", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::cam_callback, this, _1),
             sub_options);
 
+        leader_gnss_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/leader/fix", rclcpp::QoS{1});
+
         follower_gnss_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-            "/gnss", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
+            this->get_parameter("gnss_topic").as_string(), rclcpp::QoS{1}, std::bind(&VilmaPlatooning::follower_gnss_callback, this, _1),
             sub_options);
 
         platooning_engage_sub_ = this->create_subscription<std_msgs::msg::UInt16>(
@@ -108,6 +111,16 @@ namespace vilma_platooning
 
         RCLCPP_INFO(this->get_logger(), "CAM received");
 
+        sensor_msgs::msg::NavSatFix leader_fix;
+
+        leader_fix.latitude = etsi_its_cam_msgs::access::getLatitude(*msg);
+        leader_fix.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
+        leader_fix.altitude = etsi_its_cam_msgs::access::getAltitude(*msg);
+        leader_fix.header.frame_id = std::string("leader");
+        leader_fix.header.stamp = this->get_clock()->now();
+
+        leader_gnss_pub_->publish(leader_fix);
+
         target_vehicle_states_mutex_.lock();
 
         target_vehicle_states_.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
@@ -120,6 +133,8 @@ namespace vilma_platooning
 
         // Compute distance between vehicles
         getDistance(target_vehicle_states_, following_vehicle_states_);
+
+        RCLCPP_INFO(this->get_logger(), "Distance: %lf", target_vehicle_states_.distance);
 
         following_vehicle_states_mutex_.unlock();
         target_vehicle_states_mutex_.unlock();
