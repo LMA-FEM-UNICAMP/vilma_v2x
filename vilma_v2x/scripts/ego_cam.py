@@ -33,6 +33,8 @@ from std_msgs.msg import Float32, UInt16, String
 
 from sensor_msgs.msg import NavSatFix
 
+from geometry_msgs.msg import Vector3Stamped
+
 from autoware_vehicle_msgs.msg import ControlModeReport
 from autoware_vehicle_msgs.msg import VelocityReport
 from autoware_vehicle_msgs.srv import ControlModeCommand
@@ -44,7 +46,7 @@ class ego_cam(Node):
 
         super().__init__("cam_publisher")
         
-        self.ego_cam = self.create_publisher(CAM, "/v2x/etsi_parser/cam/out", 1)
+        self.ego_cam = self.create_publisher(CAM, "/v2x/etsi_parser/cam/in", 1)
         
         self.velocity_report = self.create_subscription(
             VelocityReport, '/vehicle/status/velocity_status', self.speedCallback, 10)
@@ -52,14 +54,22 @@ class ego_cam(Node):
         self.gnss_sub = self.create_subscription(
             NavSatFix, '/gnss', self.gnssCallback, 10)
         
-        
         self.gnss_sub = self.create_subscription(
             NavSatFix, '/obu/fix', self.obuCallback, 10)
         
+        self.heading_sub = self.create_subscription(
+            Vector3Stamped, '/filter/euler', self.headingCallback, 10)
+        
         self.velocity = 0.0
+        self.heading = 0.0
         
     def speedCallback(self, msg):
         self.velocity = msg.longitudinal_velocity
+        
+    def headingCallback(self, msg):
+        self.heading = msg.vector.z
+        if(self.heading < 0):
+            self.heading = self.heading + 360.0
     
     def gnssCallback(self, msggnss):
         
@@ -76,7 +86,7 @@ class ego_cam(Node):
         msg.cam.cam_parameters.basic_container.reference_position.longitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.longitude.ONE_MICRODEGREE_EAST * 1e6 * msggnss.longitude)
 
         basic_vehicle_container_high_frequency = BasicVehicleContainerHighFrequency()
-        basic_vehicle_container_high_frequency.heading.heading_value.value = basic_vehicle_container_high_frequency.heading.heading_value.WGS84_NORTH
+        basic_vehicle_container_high_frequency.heading.heading_value.value = int(self.heading * 10)
         basic_vehicle_container_high_frequency.heading.heading_confidence.value = basic_vehicle_container_high_frequency.heading.heading_confidence.EQUAL_OR_WITHIN_ONE_DEGREE
         basic_vehicle_container_high_frequency.speed.speed_value.value = int(self.velocity * 100)
         basic_vehicle_container_high_frequency.speed.speed_confidence.value = basic_vehicle_container_high_frequency.speed.speed_confidence.EQUAL_OR_WITHIN_ONE_CENTIMETER_PER_SEC
@@ -103,7 +113,7 @@ class ego_cam(Node):
         msg.cam.cam_parameters.basic_container.reference_position.longitude.value = int(msg.cam.cam_parameters.basic_container.reference_position.longitude.ONE_MICRODEGREE_EAST * 1e6 * msggnss.longitude)
 
         basic_vehicle_container_high_frequency = BasicVehicleContainerHighFrequency()
-        basic_vehicle_container_high_frequency.heading.heading_value.value = basic_vehicle_container_high_frequency.heading.heading_value.WGS84_NORTH
+        basic_vehicle_container_high_frequency.heading.heading_value.value = int(self.heading * 10)
         basic_vehicle_container_high_frequency.heading.heading_confidence.value = basic_vehicle_container_high_frequency.heading.heading_confidence.EQUAL_OR_WITHIN_ONE_DEGREE
         basic_vehicle_container_high_frequency.speed.speed_value.value = int(self.velocity * 100)
         basic_vehicle_container_high_frequency.speed.speed_confidence.value = basic_vehicle_container_high_frequency.speed.speed_confidence.EQUAL_OR_WITHIN_ONE_CENTIMETER_PER_SEC
@@ -118,8 +128,6 @@ class ego_cam(Node):
 
 
 if __name__ == "__main__":
-    
-    print("start")
 
     rclpy.init()
     ego_cam = ego_cam()
