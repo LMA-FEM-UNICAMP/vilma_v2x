@@ -31,6 +31,7 @@ endif()
 install(
   PROGRAMS
     scripts/ego_cam.py
+    scripts/cam_monitoring.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
