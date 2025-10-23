@@ -7,6 +7,10 @@ endif()
 
 # find dependencies
 find_package(ament_cmake REQUIRED)
+find_package(etsi_its_cam_msgs REQUIRED)
+find_package(etsi_its_msgs_utils REQUIRED)
+find_package(std_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 # uncomment the following section in order to fill in
 # further dependencies manually.
 # find_package(<dependency> REQUIRED)
@@ -23,11 +27,20 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+install(
+  PROGRAMS 
+  scripts/ego_cam.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 install(DIRECTORY 
         config
         launch
         scripts
         DESTINATION share/${PROJECT_NAME})
+
+
+        
 
 
 ament_package()
