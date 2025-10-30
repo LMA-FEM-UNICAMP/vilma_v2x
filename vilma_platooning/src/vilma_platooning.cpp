@@ -1,6 +1,7 @@
 #include "vilma_platooning/vilma_platooning.hpp"
 
 #include <GeographicLib/Geodesic.hpp>
+#include <GeographicLib/UTMUPS.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -87,6 +88,8 @@ namespace vilma_platooning
 
     void VilmaPlatooning::follower_gnss_callback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
     {
+        RCLCPP_INFO_ONCE(this->get_logger(), "Using %s GNSS.", this->get_parameter("gnss_topic").as_string().c_str());
+
         following_vehicle_states_mutex_.lock();
         following_vehicle_states_.longitude = msg->longitude;
         following_vehicle_states_.latitude = msg->latitude;
@@ -228,6 +231,23 @@ namespace vilma_platooning
                      following_vehicle.latitude,
                      following_vehicle.longitude,
                      leader_vehicle.distance);
+
+        int zone;
+        bool is_north;
+
+        GeographicLib::UTMUPS::Forward(leader_vehicle.latitude,
+                                       leader_vehicle.longitude,
+                                       zone,
+                                       is_north,
+                                       leader_vehicle.utm_x,
+                                       leader_vehicle.utm_y);
+
+        GeographicLib::UTMUPS::Forward(following_vehicle.latitude,
+                                       following_vehicle.longitude,
+                                       zone,
+                                       is_north,
+                                       following_vehicle.utm_x,
+                                       following_vehicle.utm_y);
 
         leader_vehicle.lateral_distance = 0.0;      // TODO
         leader_vehicle.longitudinal_distance = 0.0; // TODO

@@ -30,6 +30,8 @@ namespace vilma_platooning
   {
     double longitude;
     double latitude;
+    double utm_x;
+    double utm_y;
     double heading;
     double speed;
     double acceleration;

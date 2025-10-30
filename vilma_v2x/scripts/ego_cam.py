@@ -62,14 +62,23 @@ class ego_cam(Node):
         
         self.velocity = 0.0
         self.heading = 0.0
+        self.heading_i = 0.0
         
     def speedCallback(self, msg):
         self.velocity = msg.longitudinal_velocity
         
     def headingCallback(self, msg):
-        self.heading = msg.vector.z
-        if(self.heading < 0):
+        
+        self.heading = -msg.vector.z - self.heading_i
+        
+        if(self.heading_i == 0.0):
+            self.heading_i = self.heading - 90
+        
+        
+        if(self.heading < 0.0):
             self.heading = self.heading + 360.0
+        if(self.heading > 360.0):
+            self.heading = self.heading - 360.0
     
     def gnssCallback(self, msggnss):
         
@@ -95,7 +104,7 @@ class ego_cam(Node):
         msg.cam.cam_parameters.high_frequency_container.choice = msg.cam.cam_parameters.high_frequency_container.CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY
         msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency = basic_vehicle_container_high_frequency
 
-        self.get_logger().info(f"Publishing CAM")
+        self.get_logger().info(f"Publishing CAM (/gnss)")
         self.ego_cam.publish(msg)
     
     def obuCallback(self, msggnss):
@@ -122,8 +131,8 @@ class ego_cam(Node):
         msg.cam.cam_parameters.high_frequency_container.choice = msg.cam.cam_parameters.high_frequency_container.CHOICE_BASIC_VEHICLE_CONTAINER_HIGH_FREQUENCY
         msg.cam.cam_parameters.high_frequency_container.basic_vehicle_container_high_frequency = basic_vehicle_container_high_frequency
 
-        self.get_logger().info(f"Publishing CAM")
-        self.ego_cam.publish(msg)
+        # self.get_logger().info(f"Publishing CAM")
+        # self.ego_cam.publish(msg)
         
 
 

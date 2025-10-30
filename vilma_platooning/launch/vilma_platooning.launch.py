@@ -11,17 +11,18 @@ from launch.actions import ExecuteProcess
 
 
 def generate_launch_description():
-
-    vilma_platooning = Node(
-        package="vilma_platooning",
-        executable="vilma_platooning_node",
-        namespace="",
-        remappings=[('/cam/out', '/v2x/etsi_parser/cam/out')],
-        parameters=[{'gnss_topic': '/obu/fix'}],
-        name="vilma_platooning",
-        output='both')
-    
     
     return LaunchDescription([
-        vilma_platooning
+        
+        DeclareLaunchArgument('gnss_topic', default_value='/gnss'),
+
+        Node(
+            package="vilma_platooning",
+            executable="vilma_platooning_node",
+            namespace="",
+            remappings=[('/cam/out', '/v2x/etsi_parser/cam/out')],
+            parameters=[{'gnss_topic': LaunchConfiguration('gnss_topic')}],
+            name="vilma_platooning",
+            output='both')
+        
     ])
