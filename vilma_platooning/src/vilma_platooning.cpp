@@ -338,7 +338,7 @@ namespace vilma_platooning
         control_action.longitudinal.velocity = std::min(0.0, action);
         // control_action.longitudinal.acceleration = target_states.acceleration;
 
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
+        // RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
 
         // * Publish desired speed, acceleration, jerk to vehicle in SI units
 

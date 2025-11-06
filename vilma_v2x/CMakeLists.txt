@@ -32,6 +32,8 @@ install(
   PROGRAMS
     scripts/ego_cam.py
     scripts/cam_monitoring.py
+    scripts/tf_pub.py
+    scripts/gps_error.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
