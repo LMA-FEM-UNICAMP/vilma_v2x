@@ -16,6 +16,8 @@ from geometry_msgs.msg import Vector3Stamped
 
 from math import sqrt
 
+from xsens_mti_ros2_driver import XsStatusWord
+
 
 header = ['timestamp_gnss', 'timestamp_cam', 'distance', 'velocity_imu', 'velocity_cam', 'lat_gnss', 'long_gnss', 'lat_cam', 'long_cam']
 
@@ -33,7 +35,10 @@ class GpsError(Node):
            Vector3Stamped, '/filter/velocity', self.velocityCallback, 1)
         
         self.gnss_sub = self.create_subscription(
-            NavSatFix, '/gnss', self.gnssCallback, 10)
+            NavSatFix, '/gnss', self.gnssCallback, 1)
+        
+        self.status_sub = self.create_subscription(
+            XsStatusWord, '/status', self.statusCallback, 1)
         
         self.new_data_cam = False
         self.new_data_gnss = False
@@ -48,6 +53,8 @@ class GpsError(Node):
         
         self.rows = []
         
+        self.rtk = False
+        
     def save(self):
         with open('low_speed_data_v2x_rtk.csv', 'w', newline='') as file:
             writer = csv.writer(file)
@@ -55,6 +62,9 @@ class GpsError(Node):
             writer.writerows(self.rows)
             
         print('CSV saved.')
+        
+    def statusCallback(self, msg):
+        self.rtk = bool(msg.rtk_status)
     
     def velocityCallback(self, msg):
         
