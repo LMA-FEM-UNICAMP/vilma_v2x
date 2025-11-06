@@ -16,10 +16,10 @@ from geometry_msgs.msg import Vector3Stamped
 
 from math import sqrt
 
-from xsens_mti_ros2_driver import XsStatusWord
+from xsens_mti_ros2_driver.msg import XsStatusWord
 
 
-header = ['timestamp_gnss', 'timestamp_cam', 'distance', 'velocity_imu', 'velocity_cam', 'lat_gnss', 'long_gnss', 'lat_cam', 'long_cam']
+header = ['timestamp_gnss', 'timestamp_cam', 'distance', 'velocity_imu', 'velocity_cam', 'rtk', 'lat_gnss', 'long_gnss', 'lat_cam', 'long_cam']
 
 
 class GpsError(Node):
@@ -56,7 +56,7 @@ class GpsError(Node):
         self.rtk = False
         
     def save(self):
-        with open('low_speed_data_v2x_rtk.csv', 'w', newline='') as file:
+        with open('low_speed_data_v2x_rtk2.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(header)
             writer.writerows(self.rows)
@@ -100,7 +100,7 @@ class GpsError(Node):
         
         row = [ float(self.gnss_latlong.header.stamp.sec) + float(self.gnss_latlong.header.stamp.nanosec *1e-9), 
                 float(self.cam_latlong.header.stamp.sec) + float(self.cam_latlong.header.stamp.nanosec *1e-9), 
-                distance, self.velocity, self.velocity_cam,
+                distance, self.velocity, self.velocity_cam, self.rtk,
                 self.gnss_latlong.latitude, self.gnss_latlong.longitude, 
                 self.cam_latlong.latitude, self.cam_latlong.longitude
         ]
