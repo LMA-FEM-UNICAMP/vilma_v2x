@@ -56,7 +56,7 @@ class GpsError(Node):
         self.rtk = False
         
     def save(self):
-        with open('low_speed_data_v2x_rtk2.csv', 'w', newline='') as file:
+        with open('low_speed_data_v2x_rtk3.csv', 'w', newline='') as file:
             writer = csv.writer(file)
             writer.writerow(header)
             writer.writerows(self.rows)
