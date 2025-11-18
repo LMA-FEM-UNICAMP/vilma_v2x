@@ -51,3 +51,5 @@ qtcreator-*
 CATKIN_IGNORE
 .vscode
 log
+vilma_v2x/config/udp_driver_receiver.param.yaml
+vilma_v2x/config/udp_driver_sender.param.yaml
