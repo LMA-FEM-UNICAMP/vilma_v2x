@@ -75,14 +75,16 @@ namespace vilma_platooning
     std::atomic<uint8_t> platooning_state_;
     std::atomic<uint8_t> vehicle_control_mode_;
 
-    vehicle_states_t target_vehicle_states_;
+    vehicle_states_t leader_vehicle_states_;
     vehicle_states_t following_vehicle_states_;
 
     std::atomic<double> distance_setpoint_;
 
     /// Shared variables mutexes
-    std::mutex target_vehicle_states_mutex_;
+    std::mutex leader_vehicle_states_mutex_;
     std::mutex following_vehicle_states_mutex_;
+
+    rclcpp::Time platooning_last_call;
 
     /// ROS objects
     rclcpp::CallbackGroup::SharedPtr platooning_cb_group_;

@@ -16,7 +16,7 @@ namespace vilma_platooning
         using std::placeholders::_1;
 
         /// Parameters
-        this->declare_parameter("platooning_period_ms", 10);
+        this->declare_parameter("platooning_period_ms", 250);
         this->declare_parameter("hmi_update_period_ms", 500);
         this->declare_parameter("gnss_topic", "/gnss");
 
@@ -33,10 +33,10 @@ namespace vilma_platooning
 
         sub_options.callback_group = platooning_cb_group_;
 
-        // platooning_timer_ = this->create_wall_timer(
-        //     std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
-        //     std::bind(&VilmaPlatooning::platooning_callback, this),
-        //     platooning_cb_group_);
+        platooning_timer_ = this->create_wall_timer(
+            std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
+            std::bind(&VilmaPlatooning::platooning_callback, this),
+            platooning_cb_group_);
 
         hmi_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(this->get_parameter("hmi_update_period_ms").as_int()),
@@ -124,25 +124,23 @@ namespace vilma_platooning
 
         leader_gnss_pub_->publish(leader_fix);
 
-        target_vehicle_states_mutex_.lock();
+        leader_vehicle_states_mutex_.lock();
 
-        target_vehicle_states_.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
-        target_vehicle_states_.latitude = etsi_its_cam_msgs::access::getLatitude(*msg);
-        target_vehicle_states_.heading = etsi_its_cam_msgs::access::getHeading(*msg);
-        target_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
-        target_vehicle_states_.acceleration = etsi_its_cam_msgs::access::getLongitudinalAcceleration(*msg);
+        leader_vehicle_states_.longitude = etsi_its_cam_msgs::access::getLongitude(*msg);
+        leader_vehicle_states_.latitude = etsi_its_cam_msgs::access::getLatitude(*msg);
+        leader_vehicle_states_.heading = etsi_its_cam_msgs::access::getHeading(*msg);
+        leader_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
+        leader_vehicle_states_.acceleration = etsi_its_cam_msgs::access::getLongitudinalAcceleration(*msg);
 
         following_vehicle_states_mutex_.lock();
 
         // Compute distance between vehicles
-        getDistance(target_vehicle_states_, following_vehicle_states_);
+        getDistance(leader_vehicle_states_, following_vehicle_states_);
 
-        RCLCPP_INFO(this->get_logger(), "Distance: %lf", target_vehicle_states_.distance);
+        RCLCPP_INFO(this->get_logger(), "Distance: %lf", leader_vehicle_states_.distance);
 
         following_vehicle_states_mutex_.unlock();
-        target_vehicle_states_mutex_.unlock();
-
-        platooning_callback();
+        leader_vehicle_states_mutex_.unlock();
     }
 
     void VilmaPlatooning::platooning_engage_callback(const std_msgs::msg::UInt16::SharedPtr msg)
@@ -268,9 +266,9 @@ namespace vilma_platooning
         std_msgs::msg::Float32 target_speed_hmi;
         std_msgs::msg::Float32 distance_hmi;
 
-        target_vehicle_states_mutex_.lock();
-        distance_hmi.data = target_vehicle_states_.distance;
-        target_vehicle_states_mutex_.unlock();
+        leader_vehicle_states_mutex_.lock();
+        distance_hmi.data = leader_vehicle_states_.distance;
+        leader_vehicle_states_mutex_.unlock();
 
         hmi_distance_pub_->publish(distance_hmi);
 
@@ -323,9 +321,9 @@ namespace vilma_platooning
         follower_states = following_vehicle_states_;
         following_vehicle_states_mutex_.unlock();
 
-        target_vehicle_states_mutex_.lock();
-        target_states = target_vehicle_states_;
-        target_vehicle_states_mutex_.unlock();
+        leader_vehicle_states_mutex_.lock();
+        target_states = leader_vehicle_states_;
+        leader_vehicle_states_mutex_.unlock();
 
         // ! Run platooning control
 
