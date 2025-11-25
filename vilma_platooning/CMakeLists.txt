@@ -9,7 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(ament_cmake_ros REQUIRED)
 find_package(rclcpp REQUIRED)
-# find_package(vilma_interface REQUIRED)
+find_package(vilma_interface REQUIRED)
 find_package(vilma_v2x REQUIRED)
 find_package(etsi_its_cam_msgs REQUIRED)
 find_package(etsi_its_msgs_utils REQUIRED)
@@ -17,7 +17,7 @@ find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(autoware_control_msgs REQUIRED)
 find_package(autoware_vehicle_msgs REQUIRED)
-find_package(carla_msgs REQUIRED)
+# find_package(carla_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(ackermann_msgs REQUIRED)
 find_package(GeographicLib REQUIRED)
@@ -34,13 +34,13 @@ target_include_directories(vilma_platooning PUBLIC
 ament_target_dependencies(
   vilma_platooning
   "rclcpp"
-  # "vilma_interface"
+  "vilma_interface"
   "vilma_v2x"
   "etsi_its_cam_msgs"
   "etsi_its_msgs_utils"
   "std_msgs"
   "sensor_msgs"
-  "carla_msgs"
+  # "carla_msgs"
   "nav_msgs"
   "ackermann_msgs"
   "autoware_control_msgs"
@@ -68,14 +68,14 @@ install(
   PROGRAMS 
   scripts/simulate_target.py
   scripts/simulate_cam.py
-  scripts/carla_leader_controller.py
+  # scripts/carla_leader_controller.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
-install(
-  PROGRAMS scripts/carla_leader_controller.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+# install(
+#   PROGRAMS scripts/carla_leader_controller.py
+#   DESTINATION lib/${PROJECT_NAME}
+# )
 
 install(DIRECTORY 
         config
