@@ -94,7 +94,6 @@ namespace vilma_platooning
         following_vehicle_states_.longitude = msg->longitude;
         following_vehicle_states_.latitude = msg->latitude;
         following_vehicle_states_mutex_.unlock();
-        // TODO Heading?
     }
 
     void VilmaPlatooning::control_mode_callback(const autoware_vehicle_msgs::msg::ControlModeReport::SharedPtr msg)
@@ -336,7 +335,7 @@ namespace vilma_platooning
         control_action.longitudinal.velocity = std::min(0.0, action);
         // control_action.longitudinal.acceleration = target_states.acceleration;
 
-        // RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
 
         // * Publish desired speed, acceleration, jerk to vehicle in SI units
 
