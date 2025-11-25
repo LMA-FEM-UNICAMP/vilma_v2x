@@ -106,7 +106,7 @@ namespace vilma_platooning
 
     rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr set_distance_sub_;
 
-    rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr control_commmand_pub_;
+    rclcpp::Publisher<autoware_control_msgs::msg::Control>::SharedPtr control_command_pub_;
 
     rclcpp::Client<ControlModeCommand>::SharedPtr control_mode_command_cli_;
 

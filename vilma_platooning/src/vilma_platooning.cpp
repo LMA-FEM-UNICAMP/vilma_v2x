@@ -72,7 +72,7 @@ namespace vilma_platooning
             "/hmi/set_distance", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::set_distance_callback, this, _1),
             sub_options);
 
-        control_commmand_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
+        control_command_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
         hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", rclcpp::QoS{1});
         hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", rclcpp::QoS{1});
         hmi_distance_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/distance", rclcpp::QoS{1});
@@ -341,7 +341,7 @@ namespace vilma_platooning
 
         if (platooning_state_.load() == VilmaPlatooning::PLATOONING_ENABLE)
         {
-            control_commmand_pub_->publish(control_action);
+            control_command_pub_->publish(control_action);
         }
     }
 
