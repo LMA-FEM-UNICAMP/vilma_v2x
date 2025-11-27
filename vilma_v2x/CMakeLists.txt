@@ -34,6 +34,7 @@ install(
     scripts/cam_monitoring.py
     scripts/tf_pub.py
     scripts/gps_error.py
+    scripts/rsu_cam.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
