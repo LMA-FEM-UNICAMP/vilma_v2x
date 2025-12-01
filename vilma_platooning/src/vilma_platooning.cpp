@@ -334,6 +334,8 @@ namespace vilma_platooning
 
         double kp = 0.5;
 
+        // TODO: Saturate error portion in control action
+
         double action = target_states.speed - error * kp; // u = x_dot - e_dist*kp
 
         control_action.longitudinal.velocity = std::max(0.0, action);
