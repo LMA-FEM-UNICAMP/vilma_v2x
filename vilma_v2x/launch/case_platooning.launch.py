@@ -45,7 +45,12 @@ def generate_launch_description():
     nmea_launch = IncludeLaunchDescription(
       PythonLaunchDescriptionSource([os.path.join(
          get_package_share_directory('nmea_navsat_driver')),
-         '/launch/nmea_tcpclient_driver.launch.py']))
+         '/launch/nmea_tcpclient_driver.launch.py']),
+      launch_arguments={
+        'gnss_topic': '/gnss'
+        # 'gnss_topic': '/obu/fix'
+      }.items(),
+    )
     
     
     return LaunchDescription([
@@ -54,6 +59,6 @@ def generate_launch_description():
         hmi_launch,
         v2x_launch,
         xsens_launch,
-        ntrip_launch,
+        # ntrip_launch,
         nmea_launch
     ])

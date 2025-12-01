@@ -33,10 +33,10 @@ namespace vilma_platooning
 
         sub_options.callback_group = platooning_cb_group_;
 
-        platooning_timer_ = this->create_wall_timer(
-            std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
-            std::bind(&VilmaPlatooning::platooning_callback, this),
-            platooning_cb_group_);
+        // platooning_timer_ = this->create_wall_timer(
+        //     std::chrono::milliseconds(this->get_parameter("platooning_period_ms").as_int()),
+        //     std::bind(&VilmaPlatooning::platooning_callback, this),
+        //     platooning_cb_group_);
 
         hmi_timer_ = this->create_wall_timer(
             std::chrono::milliseconds(this->get_parameter("hmi_update_period_ms").as_int()),
@@ -72,7 +72,7 @@ namespace vilma_platooning
             "/hmi/set_distance", rclcpp::QoS{1}, std::bind(&VilmaPlatooning::set_distance_callback, this, _1),
             sub_options);
 
-        control_command_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/control_command", rclcpp::QoS{1});
+        control_command_pub_ = this->create_publisher<autoware_control_msgs::msg::Control>("/control/command/control_cmd", rclcpp::QoS{1});
         hmi_target_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/target_speed", rclcpp::QoS{1});
         hmi_follower_speed_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/follower_speed", rclcpp::QoS{1});
         hmi_distance_pub_ = this->create_publisher<std_msgs::msg::Float32>("/hmi/distance", rclcpp::QoS{1});
@@ -131,6 +131,8 @@ namespace vilma_platooning
         leader_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
         leader_vehicle_states_.acceleration = etsi_its_cam_msgs::access::getLongitudinalAcceleration(*msg);
 
+        RCLCPP_INFO(this->get_logger(), "CAM Speed: %lf", leader_vehicle_states_.speed);
+
         following_vehicle_states_mutex_.lock();
 
         // Compute distance between vehicles
@@ -140,6 +142,8 @@ namespace vilma_platooning
 
         following_vehicle_states_mutex_.unlock();
         leader_vehicle_states_mutex_.unlock();
+
+        platooning_callback();
     }
 
     void VilmaPlatooning::platooning_engage_callback(const std_msgs::msg::UInt16::SharedPtr msg)
@@ -328,20 +332,22 @@ namespace vilma_platooning
 
         double error = distance_setpoint_.load() - target_states.distance;
 
-        double kp = 0.3;
+        double kp = 0.5;
 
         double action = target_states.speed - error * kp; // u = x_dot - e_dist*kp
 
-        control_action.longitudinal.velocity = std::min(0.0, action);
+        control_action.longitudinal.velocity = std::max(0.0, action);
         // control_action.longitudinal.acceleration = target_states.acceleration;
 
         RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
 
         // * Publish desired speed, acceleration, jerk to vehicle in SI units
 
+
+        control_command_pub_->publish(control_action);
+
         if (platooning_state_.load() == VilmaPlatooning::PLATOONING_ENABLE)
         {
-            control_command_pub_->publish(control_action);
         }
     }
 
