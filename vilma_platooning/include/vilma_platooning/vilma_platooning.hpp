@@ -44,6 +44,7 @@ namespace vilma_platooning
   {
 
   public:
+    constexpr static uint8_t PLATOONING_UNAVAILABLE = 0; // Do nothing
     constexpr static uint8_t PLATOONING_DISABLE = 1; // Do nothing
     constexpr static uint8_t PLATOONING_ENABLE = 2;  // Start platooning
     constexpr static uint8_t PLATOONING_PAUSE = 3;   // Run platooning but disengage vehicle (LEGACY)

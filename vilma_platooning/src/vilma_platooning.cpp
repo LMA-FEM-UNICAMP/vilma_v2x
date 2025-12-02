@@ -23,7 +23,7 @@ namespace vilma_platooning
         this->declare_parameter("gnss_topic", "/gnss");
 
         /// Initialization
-        platooning_state_.store(VilmaPlatooning::PLATOONING_DISABLE);
+        platooning_state_.store(VilmaPlatooning::PLATOONING_UNAVAILABLE);
 
         following_vehicle_states_.latitude = 0.0;
         following_vehicle_states_.longitude = 0.0;
