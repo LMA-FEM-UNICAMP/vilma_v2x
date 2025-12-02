@@ -23,8 +23,6 @@
 
 using ControlModeCommand = autoware_vehicle_msgs::srv::ControlModeCommand;
 
-#define MAX_CORRECTION_ACTION (10.0 / 3.5)
-
 namespace vilma_platooning
 {
 
@@ -79,6 +77,9 @@ namespace vilma_platooning
 
     vehicle_states_t leader_vehicle_states_;
     vehicle_states_t following_vehicle_states_;
+
+    double kp_;
+    double max_correction_action_;
 
     std::atomic<double> distance_setpoint_;
 

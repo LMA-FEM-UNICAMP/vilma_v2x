@@ -17,6 +17,8 @@ def generate_launch_description():
         DeclareLaunchArgument('gnss_topic', default_value='/gnss'),
         DeclareLaunchArgument('platooning_period_ms', default_value='250'),
         DeclareLaunchArgument('hmi_update_period_ms', default_value='500'),
+        DeclareLaunchArgument('kp', default_value='0.5'),
+        DeclareLaunchArgument('max_correction_action_kmh', default_value='10.0'),
 
         Node(
             package="vilma_platooning",
@@ -24,6 +26,8 @@ def generate_launch_description():
             namespace="",
             remappings=[('/cam/out', '/v2x/etsi_parser/cam/out')],
             parameters=[{'gnss_topic': LaunchConfiguration('gnss_topic')},
+                        {'max_correction_action_kmh': LaunchConfiguration('max_correction_action_kmh')},
+                        {'kp': LaunchConfiguration('kp')},
                         {'platooning_period_ms': LaunchConfiguration('platooning_period_ms')},
                         {'hmi_update_period_ms': LaunchConfiguration('hmi_update_period_ms')}],
             name="vilma_platooning",

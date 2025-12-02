@@ -17,6 +17,8 @@ namespace vilma_platooning
 
         /// Parameters
         this->declare_parameter("platooning_period_ms", 250);
+        this->declare_parameter("kp", 0.5);
+        this->declare_parameter("max_correction_action_kmh", 20.0);
         this->declare_parameter("hmi_update_period_ms", 500);
         this->declare_parameter("gnss_topic", "/gnss");
 
@@ -25,6 +27,9 @@ namespace vilma_platooning
 
         following_vehicle_states_.latitude = 0.0;
         following_vehicle_states_.longitude = 0.0;
+
+        kp_ = this->get_parameter("kp").as_double();
+        max_correction_action_ = this->get_parameter("max_correction_action_kmh").as_double() / 3.6;
 
         /// ROS2 entities
         rclcpp::SubscriptionOptions sub_options;
@@ -110,6 +115,7 @@ namespace vilma_platooning
 
     void VilmaPlatooning::cam_callback(const etsi_its_cam_msgs::msg::CAM::SharedPtr msg)
     {
+        std_msgs::msg::Float32 target_speed_hmi;
 
         RCLCPP_INFO(this->get_logger(), "CAM received");
 
@@ -131,17 +137,20 @@ namespace vilma_platooning
         leader_vehicle_states_.speed = etsi_its_cam_msgs::access::getSpeed(*msg);
         leader_vehicle_states_.acceleration = etsi_its_cam_msgs::access::getLongitudinalAcceleration(*msg);
 
-        RCLCPP_INFO(this->get_logger(), "CAM Speed: %lf", leader_vehicle_states_.speed);
+        target_speed_hmi.data = leader_vehicle_states_.speed;
 
         following_vehicle_states_mutex_.lock();
 
         // Compute distance between vehicles
         getDistance(leader_vehicle_states_, following_vehicle_states_);
 
-        RCLCPP_INFO(this->get_logger(), "Distance: %lf", leader_vehicle_states_.distance);
+        RCLCPP_INFO(this->get_logger(), "Speed: %.2f km/h | Distance: %.2f m", (target_speed_hmi.data*3.6), leader_vehicle_states_.distance);
 
         following_vehicle_states_mutex_.unlock();
         leader_vehicle_states_mutex_.unlock();
+
+        //* Publishing after release the mutex
+        hmi_target_speed_pub_->publish(target_speed_hmi);
 
         platooning_callback();
     }
@@ -332,18 +341,16 @@ namespace vilma_platooning
 
         double error = distance_setpoint_.load() - target_states.distance;
 
-        double kp = 0.2; // kp m/s -> correction in 1/kp seconds
-
         // TODO: Saturate error portion in control action
 
-        double correction_action = std::min(MAX_CORRECTION_ACTION, error * kp);
+        double correction_action = std::min(max_correction_action_, error * kp_);
 
         double action = target_states.speed - correction_action; // u = x_dot - e_dist*kp
 
         control_action.longitudinal.velocity = std::max(0.0, action);
         // control_action.longitudinal.acceleration = target_states.acceleration;
 
-        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
+        RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control: \n         Error: %.2f m | Setpoint: %.2f km/h", error, (action * 3.6));
 
         // * Publish desired speed, acceleration, jerk to vehicle in SI units
         if (platooning_state_.load() == VilmaPlatooning::PLATOONING_ENABLE)
