@@ -23,6 +23,8 @@
 
 using ControlModeCommand = autoware_vehicle_msgs::srv::ControlModeCommand;
 
+#define MAX_CORRECTION_ACTION (10.0 / 3.5)
+
 namespace vilma_platooning
 {
 

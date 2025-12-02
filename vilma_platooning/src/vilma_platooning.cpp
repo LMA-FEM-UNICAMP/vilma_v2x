@@ -21,7 +21,7 @@ namespace vilma_platooning
         this->declare_parameter("gnss_topic", "/gnss");
 
         /// Initialization
-        platooning_state_.store(0);
+        platooning_state_.store(VilmaPlatooning::PLATOONING_DISABLE);
 
         following_vehicle_states_.latitude = 0.0;
         following_vehicle_states_.longitude = 0.0;
@@ -332,11 +332,13 @@ namespace vilma_platooning
 
         double error = distance_setpoint_.load() - target_states.distance;
 
-        double kp = 0.5;
+        double kp = 0.2; // kp m/s -> correction in 1/kp seconds
 
         // TODO: Saturate error portion in control action
 
-        double action = target_states.speed - error * kp; // u = x_dot - e_dist*kp
+        double correction_action = std::min(MAX_CORRECTION_ACTION, error * kp);
+
+        double action = target_states.speed - correction_action; // u = x_dot - e_dist*kp
 
         control_action.longitudinal.velocity = std::max(0.0, action);
         // control_action.longitudinal.acceleration = target_states.acceleration;
@@ -344,12 +346,9 @@ namespace vilma_platooning
         RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Control \n Error: %lf | Action: %lf", error, action);
 
         // * Publish desired speed, acceleration, jerk to vehicle in SI units
-
-
-        control_command_pub_->publish(control_action);
-
         if (platooning_state_.load() == VilmaPlatooning::PLATOONING_ENABLE)
         {
+            control_command_pub_->publish(control_action);
         }
     }
 
