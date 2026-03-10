@@ -35,6 +35,7 @@ install(
     scripts/tf_pub.py
     scripts/gps_error.py
     scripts/rsu_cam.py
+    scripts/cv2x_range.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
