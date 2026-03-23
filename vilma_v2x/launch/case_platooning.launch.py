@@ -20,7 +20,12 @@ def generate_launch_description():
     platooning_control_launch = IncludeLaunchDescription(
       PythonLaunchDescriptionSource([os.path.join(
          get_package_share_directory('vilma_platooning')),
-         '/launch/vilma_platooning.launch.py']))
+         '/launch/vilma_platooning.launch.py']),
+          launch_arguments={
+            'gnss_topic': '/gnss'
+            # 'gnss_topic': '/obu/fix'
+          }.items(),
+      )
     
     hmi_launch = IncludeLaunchDescription(
       PythonLaunchDescriptionSource([os.path.join(
@@ -46,11 +51,16 @@ def generate_launch_description():
       PythonLaunchDescriptionSource([os.path.join(
          get_package_share_directory('nmea_navsat_driver')),
          '/launch/nmea_tcpclient_driver.launch.py']),
-      launch_arguments={
-        'gnss_topic': '/gnss'
-        # 'gnss_topic': '/obu/fix'
-      }.items(),
-    )
+          launch_arguments={
+            'ns': 'obu'
+          }.items(),
+      )
+    
+    ego_cam_node = Node(
+      package='vilma_v2x',
+      executable='ego_cam.py',
+      name='ego_cam',
+      output='screen')
     
     
     return LaunchDescription([
@@ -60,5 +70,6 @@ def generate_launch_description():
         v2x_launch,
         xsens_launch,
         # ntrip_launch,
-        nmea_launch
+        nmea_launch,
+        ego_cam_node
     ])
