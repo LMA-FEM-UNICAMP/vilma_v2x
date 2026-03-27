@@ -24,6 +24,9 @@
 # SOFTWARE.
 # ==============================================================================
 
+import numpy as np
+
+
 import rclpy
 from rclpy.node import Node
 from etsi_its_cam_msgs.msg import *
@@ -34,6 +37,7 @@ from std_msgs.msg import Float32, UInt16, String
 from sensor_msgs.msg import NavSatFix
 
 from geometry_msgs.msg import Vector3Stamped
+from geometry_msgs.msg import TwistStamped
 
 from autoware_vehicle_msgs.msg import ControlModeReport
 from autoware_vehicle_msgs.msg import VelocityReport
@@ -48,14 +52,17 @@ class ego_cam(Node):
         
         self.ego_cam = self.create_publisher(CAM, "/v2x/etsi_parser/cam/in", 1)
         
-        self.velocity_report = self.create_subscription(
-            VelocityReport, '/vehicle/status/velocity_status', self.speedCallback, 10)
+        # self.velocity_report = self.create_subscription(
+        #     VelocityReport, '/vehicle/status/velocity_status', self.speedCallback, 10)
         
         self.gnss_sub = self.create_subscription(
             NavSatFix, '/gnss', self.gnssCallback, 10)
         
         self.gnss_sub = self.create_subscription(
             NavSatFix, '/obu/fix', self.obuCallback, 10)
+        
+        self.gnssvel_sub = self.create_subscription(
+            TwistStamped, '/obu/vel', self.speedCallback, 10)
         
         self.heading_sub = self.create_subscription(
             Vector3Stamped, '/filter/euler', self.headingCallback, 10)
@@ -65,7 +72,7 @@ class ego_cam(Node):
         self.heading_i = 0.0
         
     def speedCallback(self, msg):
-        self.velocity = msg.longitudinal_velocity
+        self.velocity = np.sqrt((msg.twist.linear.x * msg.twist.linear.x) + (msg.twist.linear.y * msg.twist.linear.y))
         
     def headingCallback(self, msg):
         

@@ -28,11 +28,13 @@ class GpsError(Node):
         self.cam_sub = self.create_subscription(
            CAM, '/v2x/etsi_parser/cam/out', self.camCallback, 1)
         
+        self.gnss_sub = self.create_subscription(
+           NavSatFix, '/obu/fix', self.gnssCallback, 1) 
+        
+        
         self.cam_latlong = NavSatFix()
         
         self.gnss_latlong = NavSatFix()
-        self.gnss_latlong.latitude = initial_latlong[0]
-        self.gnss_latlong.longitude = initial_latlong[1]
         
         self.max_distance = 0
         
@@ -47,17 +49,21 @@ class GpsError(Node):
         
         self.getDistance()
         
+    def gnssCallback(self, msg):
+        self.gnss_latlong = msg
     
         
     def getDistance(self):
         coord_gnss = (self.gnss_latlong.latitude, self.gnss_latlong.longitude)
         coord_cam = (self.cam_latlong.latitude, self.cam_latlong.longitude)
         distance = geodesic(coord_gnss, coord_cam).meters
-        print(str(distance)+" metros")
+        print(str(distance)+" meters | "+str(self.cam_latlong.latitude)+", "+str(self.cam_latlong.longitude))
         
         if(self.max_distance < distance):
-            print("*** New max distance: "+str(distance)+" metros")
+            print("*** New max distance: "+str(distance)+" meters")
             self.max_distance = distance
+        else:
+            print("*** Max distance: "+str(self.max_distance)+" meters")
         
         
 if __name__ == "__main__":
