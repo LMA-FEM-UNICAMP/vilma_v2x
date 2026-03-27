@@ -1,7 +1,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <sensor_msgs/msg/imu.hpp>
+#include <geometry_msgs/msg/vector3_stamped.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <can_msgs/msg/frame.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
@@ -34,11 +34,11 @@ public:
     setupUdp();
 
     gps_sub_ = this->create_subscription<sensor_msgs::msg::NavSatFix>(
-        "/gps/fix", 10,
+        "/obu/fix", 10,
         std::bind(&NMEAUdpPublisher::gpsCallback, this, std::placeholders::_1));
 
-    imu_sub_ = this->create_subscription<sensor_msgs::msg::Imu>(
-        "/imu/data", 50,
+    imu_sub_ = this->create_subscription<geometry_msgs::msg::Vector3Stamped>(
+        "/filter/euler", 50,
         std::bind(&NMEAUdpPublisher::imuCallback, this, std::placeholders::_1));
 
     can_sub_ = this->create_subscription<can_msgs::msg::Frame>(
@@ -86,14 +86,17 @@ private:
   void canCallback(const can_msgs::msg::Frame::SharedPtr msg)
   {
 
-    double longitudinal_speed;
+    if (msg->id != 0x123)
+    {
+      return;
+    }
 
     geometry_msgs::msg::TwistWithCovarianceStamped twist_msg;
 
     twist_msg.header.stamp = this->now();
     twist_msg.header.set__frame_id("base_link");
-    twist_msg.twist.twist.linear.x = longitudinal_speed;
-
+    twist_msg.twist.twist.linear.x = ((msg->data[0] << 8) + msg->data[1])*100.0; // cm/s to m/s
+    twist_pub_->publish(twist_msg);
   }
 
   void gpsCallback(const sensor_msgs::msg::NavSatFix::SharedPtr msg)
@@ -105,18 +108,10 @@ private:
     publishNMEA();
   }
 
-  void imuCallback(const sensor_msgs::msg::Imu::SharedPtr msg)
+  void imuCallback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg)
   {
-    const auto &q = msg->orientation;
-
-    double siny_cosp = 2.0 * (q.w * q.z + q.x * q.y);
-    double cosy_cosp = 1.0 - 2.0 * (q.y * q.y + q.z * q.z);
-    double yaw = std::atan2(siny_cosp, cosy_cosp);
-
-    double yaw_deg = yaw * 180.0 / M_PI;
-
     // ENU → NMEA
-    double heading = 90.0 - yaw_deg;
+    double heading = 90.0 - msg->vector.z;
     if (heading < 0.0)
       heading += 360.0;
 
@@ -200,7 +195,7 @@ private:
   // ---------------- Members ----------------
 
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gps_sub_;
-  rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
+  rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr imu_sub_;
   rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr can_sub_;
 
   rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub_;

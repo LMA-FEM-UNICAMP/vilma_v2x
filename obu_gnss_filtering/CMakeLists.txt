@@ -9,10 +9,6 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(robot_localization REQUIRED)
-find_package(xsens_mti_ros2_driver REQUIRED)
-find_package(nmea_navsat_driver REQUIRED)
-find_package(ros2_socketcan_msgs REQUIRED)
 find_package(can_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 
@@ -26,10 +22,6 @@ ament_target_dependencies(
   gnss_imu_to_nmea_node
   "std_msgs"
   "sensor_msgs"
-  "robot_localization"
-  "xsens_mti_ros2_driver"
-  "nmea_navsat_driver"
-  "ros2_socketcan_msgs"
   "can_msgs"
   "rclcpp"
 )
