@@ -76,10 +76,7 @@ class ego_cam(Node):
         
     def headingCallback(self, msg):
         
-        self.heading = -msg.vector.z - self.heading_i
-        
-        if(self.heading_i == 0.0):
-            self.heading_i = self.heading - 90
+        self.heading = msg.vector.z
         
         
         if(self.heading < 0.0):

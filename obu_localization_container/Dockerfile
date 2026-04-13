@@ -18,20 +18,21 @@ RUN rosdep init || true
 RUN rosdep update
 
 
+WORKDIR /workspace/src
+
 # CLONE CODE - FROM SRC
-# git clone -b autoware-main https://github.com/LMA-FEM-UNICAMP/eagleye.git
-# vcs import . < eagleye/eagleye.repos
-# git clone -b ros2 https://github.com/LMA-FEM-UNICAMP/Xsens_MTi_ROS_Driver_and_Ntrip_Client.git
-
-# mv Xsens_MTi_ROS_Driver_and_Ntrip_Client/src/xsens_mti_ros2_driver/ .
-# rm -rf Xsens_MTi_ROS_Driver_and_Ntrip_Client/
-
+RUN git clone -b autoware-main https://github.com/LMA-FEM-UNICAMP/eagleye.git
+RUN vcs import . < eagleye/eagleye.repos
+RUN git clone -b ros2 https://github.com/LMA-FEM-UNICAMP/Xsens_MTi_ROS_Driver_and_Ntrip_Client.git && \
+    mv Xsens_MTi_ROS_Driver_and_Ntrip_Client/src/xsens_mti_ros2_driver/ . && \
+    rm -rf Xsens_MTi_ROS_Driver_and_Ntrip_Client/
 
 # FROM WS
+WORKDIR /workspace
+
 RUN rosdep install --from-paths src -y --ignore-src
 
 RUN colcon build --symlink-install --cmake-args=-DCMAKE_BUILD_TYPE=Release  --parallel-workers $(nproc)
-
 
 RUN rm -rf /var/lib/apt/lists/*
 
