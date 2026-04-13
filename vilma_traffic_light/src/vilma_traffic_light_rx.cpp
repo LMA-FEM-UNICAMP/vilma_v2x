@@ -8,10 +8,13 @@ VilmaTrafficLightRx::VilmaTrafficLightRx(const rclcpp::NodeOptions& node_options
   RCLCPP_INFO(this->get_logger(), "Starting VilmaTrafficLightRx class...");
 
   using std::placeholders::_1;
+
   spatem_sub_ =
-      this->create_subscription<SPATEM>("/spatem", 10, std::bind(&VilmaTrafficLightRx::spatem_callback, this, _1));
-  mapem_sub_ =
-      this->create_subscription<MAPEM>("/mapem", 10, std::bind(&VilmaTrafficLightRx::mapem_callback, this, _1));
+      this->create_subscription<SPATEM>("/spatem", 1, std::bind(&VilmaTrafficLightRx::spatem_callback, this, _1));
+  mapem_sub_ = this->create_subscription<MAPEM>("/mapem", 1, std::bind(&VilmaTrafficLightRx::mapem_callback, this, _1));
+
+  time_to_change_pub_ = this->create_publisher<std_msgs::msg::Float32>("/time_to_change", 1);
+  state_pub_ = this->create_publisher<std_msgs::msg::UInt8>("/state", 1);
 }
 
 void VilmaTrafficLightRx::spatem_callback(const SPATEM::SharedPtr msg)
@@ -61,6 +64,15 @@ void VilmaTrafficLightRx::spatem_callback(const SPATEM::SharedPtr msg)
       }
     }
   }
+
+  std_msgs::msg::UInt8 state_msg;
+  std_msgs::msg::Float32 time_to_change_msg;
+
+  state_msg.data = traffic_light_status_.state;
+  time_to_change_msg.data = traffic_light_status_.next_change * 1e-3;
+
+  state_pub_->publish(state_msg);
+  time_to_change_pub_->publish(time_to_change_msg);
 }
 
 void VilmaTrafficLightRx::mapem_callback(const MAPEM::SharedPtr msg)

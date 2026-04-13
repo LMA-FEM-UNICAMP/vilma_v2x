@@ -3,6 +3,9 @@
 
 #include "rclcpp/rclcpp.hpp"
 
+#include <std_msgs/msg/float32.hpp>
+#include <std_msgs/msg/u_int8.hpp>
+
 #include "etsi_its_spatem_ts_msgs/msg/spatem.hpp"
 #include "etsi_its_msgs_utils/spatem_ts_access.hpp"  // access functions
 
@@ -29,6 +32,9 @@ public:
 private:
   rclcpp::Subscription<SPATEM>::SharedPtr spatem_sub_;
   rclcpp::Subscription<MAPEM>::SharedPtr mapem_sub_;
+
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr time_to_change_pub_;
+  rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr state_pub_;
 
   /* Traffic light info */
   traffic_light_t traffic_light_status_;
