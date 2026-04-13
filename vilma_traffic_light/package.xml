@@ -10,6 +10,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>vilma_v2x</depend>
   <depend>etsi_its_spatem_ts_msgs</depend>
   <depend>etsi_its_mapem_ts_msgs</depend>

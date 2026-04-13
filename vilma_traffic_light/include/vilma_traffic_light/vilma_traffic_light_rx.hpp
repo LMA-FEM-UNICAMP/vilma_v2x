@@ -9,7 +9,6 @@
 #include "etsi_its_mapem_ts_msgs/msg/mapem.hpp"
 #include "etsi_its_msgs_utils/mapem_ts_access.hpp"  // access functions
 
-
 #include "vilma_traffic_light/traffic_light_structures.hpp"
 
 namespace vilma_traffic_light_rx
@@ -33,7 +32,6 @@ private:
 
   /* Traffic light info */
   traffic_light_t traffic_light_status_;
-
 };
 }  // namespace vilma_traffic_light_rx
 #endif  // vilma_traffic_light_rx_HPP_
