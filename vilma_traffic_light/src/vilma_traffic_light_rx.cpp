@@ -34,13 +34,17 @@ void VilmaTrafficLightRx::spatem_callback(const SPATEM::SharedPtr msg)
       //* more lanes of a common type.
       //* - It is a array containing current and future information.
 
+      if (state.signal_group.value != 1)
+      {
+        continue;
+      }
+
       /// For each event in the state:
       for (auto& event : state.state_time_speed.array)
       {
         //* Contains details about a single movement
 
         // TODO: show just current movement
-
         traffic_light_status_.state = event.event_state.value;
 
         RCLCPP_INFO(this->get_logger(), "Traffic light status: %s",
@@ -60,19 +64,22 @@ void VilmaTrafficLightRx::spatem_callback(const SPATEM::SharedPtr msg)
 
             RCLCPP_INFO(this->get_logger(), "Time to next phase: %.2f ms", traffic_light_status_.next_change);
           }
+
+          traffic_light_status_.next_change = event.timing.likely_time.value * 100.0;
+          RCLCPP_INFO(this->get_logger(), "Time to next phase: %.2f ms", traffic_light_status_.next_change);
+
+          std_msgs::msg::UInt8 state_msg;
+          std_msgs::msg::Float32 time_to_change_msg;
+
+          state_msg.data = traffic_light_status_.state;
+          time_to_change_msg.data = traffic_light_status_.next_change * 1e-3;
+
+          state_pub_->publish(state_msg);
+          time_to_change_pub_->publish(time_to_change_msg);
         }
       }
     }
   }
-
-  std_msgs::msg::UInt8 state_msg;
-  std_msgs::msg::Float32 time_to_change_msg;
-
-  state_msg.data = traffic_light_status_.state;
-  time_to_change_msg.data = traffic_light_status_.next_change * 1e-3;
-
-  state_pub_->publish(state_msg);
-  time_to_change_pub_->publish(time_to_change_msg);
 }
 
 void VilmaTrafficLightRx::mapem_callback(const MAPEM::SharedPtr msg)

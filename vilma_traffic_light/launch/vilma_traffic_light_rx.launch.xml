@@ -1,5 +1,6 @@
 <launch>
     <node pkg="vilma_traffic_light" exec="vilma_traffic_light_rx" name="vilma_traffic_light_rx" output="screen">
-        <remap from="/spatem" to="/etsi_its_conversion/spatem_ts/in"/>
+        <remap from="/spatem" to="/v2x/etsi_parser/spatem_ts/out"/>
+        <remap from="/mapem" to="/v2x/etsi_parser/mapem_ts/out"/>
     </node>
 </launch>
