@@ -31,6 +31,12 @@ from rclpy.node import Node
 from etsi_its_spatem_ts_msgs.msg import *
 import utils
 
+RED_LIGHT_TIME = 15
+YELLOW_LIGHT_TIME = 3
+GREEN_LIGHT_TIME = 10
+
+
+
 
 HOUR_IN_SECONDS = 3600
 FACTOR_SECONDS_TO_NANOSECONDS = 1000000000
@@ -65,26 +71,18 @@ class Publisher(Node):
         
         if (self.state == MovementEvent().event_state.DARK):
             min_end_time_s = 0
-            self.get_logger().info(f'State: DARK')
         elif (self.state == MovementEvent().event_state.STOP_AND_REMAIN):
-            min_end_time_s = 7 - self.phasing
-            self.get_logger().info(f'State: STOP_AND_REMAIN')
+            min_end_time_s = RED_LIGHT_TIME - self.phasing
         elif (self.state == MovementEvent().event_state.PROTECTED_MOVEMENT_ALLOWED):
-            min_end_time_s = 5 - self.phasing
-            self.get_logger().info(f'State: PROTECTED_MOVEMENT_ALLOWED')
+            min_end_time_s = GREEN_LIGHT_TIME - self.phasing
         elif (self.state == MovementEvent().event_state.PROTECTED_CLEARANCE):
-            min_end_time_s = 1 - self.phasing
-            self.get_logger().info(f'State: PROTECTED_CLEARANCE')
-            
-        self.get_logger().info('min_end_time: '+str(min_end_time_s*1e3)+ 'ms')
+            min_end_time_s = YELLOW_LIGHT_TIME - self.phasing
         
         now_ns = self.get_clock().now().nanoseconds + int(min_end_time_s*1e9)
         
         timestamp_hour_nanosec = ((now_ns) % int(60*60 * 1e9))
         
-        timing.min_end_time.value = int((timestamp_hour_nanosec* 1e-8))
-        
-        
+        timing.min_end_time.value = int((timestamp_hour_nanosec* 1e-8))        
         
         movement_event = MovementEvent()
         movement_event.event_state.value = self.state
@@ -105,7 +103,7 @@ class Publisher(Node):
         
         msg.spat.intersections.array.append(intersection_state)
 
-        self.get_logger().info(f"Publishing SPATEM (TS)\n")
+        self.get_logger().info(f"Publishing SPATEM (TS)")
         self.publisher.publish(msg)
         
     def controller(self):
@@ -114,13 +112,13 @@ class Publisher(Node):
         if (self.state == MovementEvent().event_state.DARK):
             self.state = MovementEvent().event_state.STOP_AND_REMAIN
             self.phasing = 0
-        elif (self.state == MovementEvent().event_state.STOP_AND_REMAIN and self.phasing >= 7):
+        elif (self.state == MovementEvent().event_state.STOP_AND_REMAIN and self.phasing >= RED_LIGHT_TIME):
             self.state = MovementEvent().event_state.PROTECTED_MOVEMENT_ALLOWED
             self.phasing = 0
-        elif (self.state == MovementEvent().event_state.PROTECTED_MOVEMENT_ALLOWED and self.phasing >= 5):
+        elif (self.state == MovementEvent().event_state.PROTECTED_MOVEMENT_ALLOWED and self.phasing >= GREEN_LIGHT_TIME):
             self.state = MovementEvent().event_state.PROTECTED_CLEARANCE
             self.phasing = 0
-        elif (self.state == MovementEvent().event_state.PROTECTED_CLEARANCE and self.phasing >= 1):
+        elif (self.state == MovementEvent().event_state.PROTECTED_CLEARANCE and self.phasing >= YELLOW_LIGHT_TIME):
             self.state = MovementEvent().event_state.STOP_AND_REMAIN
             self.phasing = 0
         
