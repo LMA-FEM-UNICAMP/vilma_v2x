@@ -5,7 +5,8 @@
   },
   "workspaceFolder": "/workspace",
   "mounts": [
-    "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind"
+    "source=${localWorkspaceFolder}/src,target=/workspace/src,type=bind",
+    "source=/home/toffanetto/V2X/ros2_ws/bags/eagleye/eagleye_sample_20200715-lite,target=/workspace/bags/eagleye_sample_20200715-lite,type=bind"
   ],
   "settings": {
     "terminal.integrated.defaultProfile.linux": "bash"
