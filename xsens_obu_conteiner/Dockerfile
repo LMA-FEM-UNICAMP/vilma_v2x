@@ -45,17 +45,9 @@ RUN . /opt/ros/humble/setup.sh && \
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "source /workspace/install/setup.bash" >> ~/.bashrc
 
-
-# TODO Remove comment before deployment
-
-# RUN rm -rf build/ log/ src/ && apt remove ros-dev-tools -y && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+RUN rm -rf log/ && apt remove ros-dev-tools -y && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
 # # Setup entrypoint
-# COPY --chmod=755 ./scripts/ros_entrypoint.sh /
-# # Adding common user
-# RUN useradd -ms /bin/bash user
+COPY --chmod=755 ./ros_entrypoint.sh /
 
-# # Changing from root to user
-# USER user
-
-# ENTRYPOINT ["/ros_entrypoint.sh"]
+ENTRYPOINT ["/ros_entrypoint.sh"]
