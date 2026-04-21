@@ -19,7 +19,7 @@ def generate_launch_description():
     
     can_bus_interface_param = DeclareLaunchArgument(
             name='can_bus_interface',
-            default_value='vcan0',
+            default_value='can0',
             description='CAN interface for OBU.')
     
     can_bus_interface = LaunchConfiguration('can_bus_interface')
@@ -33,7 +33,7 @@ def generate_launch_description():
     )
     
     # xsens launch
-    parameters_file_path = Path(get_package_share_directory('xsens_mti_ros2_driver'), 'param', 'xsens_mti_node.yaml')
+    parameters_file_path = Path(get_package_share_directory('obu_can_vstate'), 'param', 'xsens_mti_node.yaml')
     xsens_mti_node = Node(
             package='xsens_mti_ros2_driver',
             executable='xsens_mti_node',

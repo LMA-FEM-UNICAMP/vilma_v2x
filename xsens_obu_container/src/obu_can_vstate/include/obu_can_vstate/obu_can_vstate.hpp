@@ -6,6 +6,8 @@
 #include <sensor_msgs/msg/imu.hpp>
 #include <geometry_msgs/msg/vector3_stamped.hpp>
 
+#include <atomic>
+
 #include <unistd.h>
 #include <net/if.h>
 #include <sys/ioctl.h>
@@ -24,6 +26,8 @@ typedef struct vehicle_imu_data{
     u_int8_t lateral_acceleration_conf; // mm/s²
     int16_t yaw_rate; // 0,01 degree per second. 
     u_int8_t yaw_rate_conf; // mm/s²
+    int16_t vertical_acceleration; // 0,01 degree per second. 
+    u_int8_t vertical_acceleration_conf; // mm/s²
 } vehicle_imu_data_t;
 
 namespace obu_can_vstate
@@ -38,6 +42,9 @@ public:
   void angular_vel_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg);
   void free_acc_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg);
   void send_can_timer_callback();
+  int16_t safeAssignToInt16(double value);
+
+  std::atomic<bool> node_exit_{false};
 
 private:
   std::string can_out_;
@@ -50,6 +57,9 @@ private:
   u_int32_t obu_vstate_can_id_;
 
   vehicle_imu_data_t vehicle_its_data_;
+
+  rclcpp::Time last_time_;
+  uint8_t timeout_s_;
 
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_;
   rclcpp::Subscription<geometry_msgs::msg::Vector3Stamped>::SharedPtr imu_angular_vel_sub_;

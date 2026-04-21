@@ -28,6 +28,7 @@ install(TARGETS obu_can_vstate_node
 
 
 install(DIRECTORY 
+  param
   launch
   scripts
   DESTINATION share/${PROJECT_NAME} 
