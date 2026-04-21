@@ -20,6 +20,41 @@ Sent the image to the OBU:
 scp xsens_obu_container-ARM_VX.tar user@<OBU_IP>:.
 ```
 
+### Configure OBU to run the container
+
+```shell
+apt update
+
+# Install Docker keyring
+sudo apt install ca-certificates curl
+sudo install -m 0755 -d /etc/apt/keyrings
+sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+sudo chmod a+r /etc/apt/keyrings/docker.asc
+
+# Add the repository to Apt sources:
+sudo tee /etc/apt/sources.list.d/docker.sources <<EOF
+Types: deb
+URIs: https://download.docker.com/linux/ubuntu
+Suites: $(. /etc/os-release && echo "${UBUNTU_CODENAME:-$VERSION_CODENAME}")
+Components: stable
+Architectures: $(dpkg --print-architecture)
+Signed-By: /etc/apt/keyrings/docker.asc
+EOF
+
+apt update
+
+# Install Docker Engine
+apt install -y docker-ce docker-ce-cli containerd.io
+
+# Init Docker daemon
+systemctl start docker
+
+# Post-installation
+groupadd docker
+usermod -aG docker $USER
+newgrp docker
+```
+
 From the OBU, load the image:
 
 ```shell
@@ -28,7 +63,7 @@ docker load -i xsens_obu_container-ARM_VX.tar
 
 ## Running
 
-Manually:
+### Manually:
 
 ```shell
 docker run -it --rm \
@@ -36,11 +71,11 @@ docker run -it --rm \
   --ipc=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
-  --device=/dev/ttyUSBX:/dev/ttyUSBX \ # IMU USB port
+  --device=/dev/ttyUSB3:/dev/ttyUSB3 \ # IMU USB port (USB-C is 3)
   xsens_obu_container:ARM_VX
 ```
 
-`systemd`:
+### Daemon:
 
 Copy `xsens_obu_container.service` to `/etc/systemd/system/` and run:
 
