@@ -1,0 +1,38 @@
+# /etc/systemd/system/xsens_obu_container.service
+# sudo systemctl daemon-reexec
+# sudo systemctl daemon-reload
+# sudo systemctl enable xsens_obu_container
+# sudo systemctl start xsens_obu_container
+
+[Unit]
+Description=xsens to CAN Docker Container
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+# Always restart unless explicitly stopped
+Restart=always
+RestartSec=3
+
+# Clean previous container if exists
+ExecStartPre=-/usr/bin/docker rm -f xsens_obu_container
+
+# Main container execution (DO NOT use -d)
+ExecStart=/usr/bin/docker run \
+  --rm \
+  --net=host \
+  --cap-add=NET_ADMIN \
+  --cap-add=NET_RAW \
+  --device=/dev/ttyUSB3:/dev/ttyUSB3 \
+  --name=xsens_obu_container \
+  xsens_obu_container:arm32_Vx
+
+# Stop container gracefully
+ExecStop=/usr/bin/docker stop xsens_obu_container
+
+# Optional: give time to shutdown properly
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target
