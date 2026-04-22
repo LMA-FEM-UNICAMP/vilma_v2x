@@ -9,7 +9,7 @@ int main(int argc, char** argv)
   while (rclcpp::ok() && !node->node_exit_)
   {
     rclcpp::spin_some(node);
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));  // Sample rate = 50 Hz (20 ms) => Pooling at 100 Hz
   }
   rclcpp::shutdown();
   return 0;

@@ -42,7 +42,7 @@ ObuCanVState::ObuCanVState() : Node("obu_can_vstate_publisher")
   /// ROS2
 
   /* Parameters*/
-  obu_vstate_can_id_ = 0x124;
+  obu_vstate_can_id_ = 0x131;
 
   using std::placeholders::_1;
   if (!use_free_acc)
@@ -94,13 +94,13 @@ void ObuCanVState::imu_callback(const sensor_msgs::msg::Imu::SharedPtr msg)
   vehicle_its_data_.longitudinal_acceleration = safeAssignToInt16(msg->linear_acceleration.x * 1000);
   vehicle_its_data_.lateral_acceleration = safeAssignToInt16(msg->linear_acceleration.y * 1000);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500,
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
                        "Longitudinal Acceleration: %d | Lateral Acceleration: %d (mm/s²)",
                        vehicle_its_data_.longitudinal_acceleration, vehicle_its_data_.lateral_acceleration);
 
   vehicle_its_data_.yaw_rate = safeAssignToInt16(msg->angular_velocity.z * 180.0 / M_PI * 100.0);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Yaw Rate: %d (0.1 deg/s)",
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Yaw Rate: %d (0.1 deg/s)",
                        vehicle_its_data_.yaw_rate);
 
   last_time_ = this->get_clock()->now();
@@ -112,7 +112,7 @@ void ObuCanVState::angular_vel_callback(const geometry_msgs::msg::Vector3Stamped
   is_new_data_ = true;
   vehicle_its_data_.yaw_rate = safeAssignToInt16(msg->vector.z * 180.0 / M_PI * 100.0);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500, "Yaw Rate: %d (0.1 deg/s)",
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "Yaw Rate: %d (0.1 deg/s)",
                        vehicle_its_data_.yaw_rate);
 }
 void ObuCanVState::free_acc_callback(const geometry_msgs::msg::Vector3Stamped::SharedPtr msg)
@@ -123,7 +123,7 @@ void ObuCanVState::free_acc_callback(const geometry_msgs::msg::Vector3Stamped::S
   vehicle_its_data_.longitudinal_acceleration = safeAssignToInt16(msg->vector.x * 1000.0);
   vehicle_its_data_.lateral_acceleration = safeAssignToInt16(msg->vector.y * 1000.0);
 
-  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 500,
+  RCLCPP_INFO_THROTTLE(this->get_logger(), *this->get_clock(), 1000,
                        "Longitudinal Acceleration: %d | Lateral Acceleration: %d (mm/s²)",
                        vehicle_its_data_.longitudinal_acceleration, vehicle_its_data_.lateral_acceleration);
 }

@@ -55,7 +55,38 @@ usermod -aG docker $USER
 newgrp docker
 ```
 
-From the OBU, load the image:
+Change Docker database folder:
+
+> OBU does not have much storage in `/`, you need to move the database to `/mnt/rw`, or better `/mnt/ubi` when using a SD Card.
+
+```shell
+# Stop Docker
+sudo systemctl stop docker
+sudo systemctl stop docker.socket
+
+# Create new directory
+sudo mkdir -p /mnt/rw/docker
+
+# Copy files
+sudo rsync -aHAX --numeric-ids /var/lib/docker/ /mnt/rw/docker/
+
+# Delete old files (check if they were copied first)
+rm -rf /var/lib/docker
+
+# Create symbolic link
+ln -s /mnt/rw/docker /var/lib/docker
+
+# Check symbolic link
+ll /var/lib
+
+# Start Docker again
+sudo systemctl start docker
+
+# Check new database
+docker info | grep "Docker Root Dir"
+```
+
+From the OBU, move the image to a good place (as `/mnt/rw/docker`) then:
 
 ```shell
 docker load -i xsens_obu_container-ARM_VX.tar
@@ -71,7 +102,7 @@ docker run -it --rm \
   --ipc=host \
   --cap-add=NET_ADMIN \
   --cap-add=NET_RAW \
-  --device=/dev/ttyUSB3:/dev/ttyUSB3 \ # IMU USB port (USB-C is 3)
+  --device=/dev/ttyUSB3:/dev/ttyUSB3 \ 
   xsens_obu_container:ARM_VX
 ```
 
