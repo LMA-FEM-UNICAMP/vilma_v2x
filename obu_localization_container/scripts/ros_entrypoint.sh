@@ -5,4 +5,6 @@ set -e
 source "/opt/ros/$ROS_DISTRO/setup.bash"
 source "/workspace/install/setup.bash"
 
-ros2 launch eagleye_rt eagleye_obu.launch.py
+# ros2 launch eagleye_rt eagleye_obu.launch.py
+
+exec "$@"

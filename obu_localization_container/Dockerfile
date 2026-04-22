@@ -1,4 +1,4 @@
-FROM ros:humble-ros-core
+FROM xsens_obu_container:AMD_V3
 
 # Debian-based package managers (like apt or apt-get) run without interactive prompts.
 ENV DEBIAN_FRONTEND=noninteractive 
@@ -32,11 +32,6 @@ RUN geographiclib-get-geoids best
 RUN mkdir /usr/share/GSIGEO
 RUN cp llh_converter/data/gsigeo2011_ver2_1.asc /usr/share/GSIGEO/
 
-# CLONE CODE - FROM SRC
-RUN git clone -b ros2 https://github.com/LMA-FEM-UNICAMP/Xsens_MTi_ROS_Driver_and_Ntrip_Client.git && \
-    mv Xsens_MTi_ROS_Driver_and_Ntrip_Client/src/xsens_mti_ros2_driver . && \
-    rm -rf Xsens_MTi_ROS_Driver_and_Ntrip_Client/ 
-
 # FROM WS
 WORKDIR /workspace
 
@@ -45,12 +40,19 @@ RUN rosdep install --from-paths src -y --ignore-src
 RUN apt install -y  \
     ros-humble-robot-state-publisher \
     ros-humble-xacro  \
+    ros-humble-rmw-cyclonedds-cpp  \
     gpsd
 
 RUN . /opt/ros/humble/setup.sh && \
-    colcon build --symlink-install  \
-                 --cmake-args=-DCMAKE_BUILD_TYPE=Release  \
-                 --parallel-workers $(nproc) 
+    colcon build  --symlink-install \
+                  --cmake-args=-DCMAKE_BUILD_TYPE=Release  \
+                  --parallel-workers $(nproc) 
+
+COPY config/cyclonedds.xml /workspace/
+
+ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+ENV CYCLONEDDS_URI=/workspace/cyclonedds.xml
+ENV ROS_DOMAIN_ID=0
 
 # Source ROS automatically
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc

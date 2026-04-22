@@ -18,7 +18,12 @@
   "runArgs": [
     "--network=host",
     "--ipc=host",
+    "--cap-add=NET_ADMIN",
+    "--cap-add=NET_RAW",
     "--privileged",
-    "--device=/dev/ttyUSB0:/dev/ttyUSB0"
-  ]
+    "--device=/dev:/dev"
+  ],
+  "containerEnv": {
+    "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp"
+  }
 }

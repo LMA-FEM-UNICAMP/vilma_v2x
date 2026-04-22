@@ -1,0 +1,10 @@
+<CycloneDDS>
+  <Domain>
+    <General>
+      <NetworkInterfaceAddress>auto</NetworkInterfaceAddress>
+    </General>
+    <Discovery>
+      <ParticipantIndex>auto</ParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>
