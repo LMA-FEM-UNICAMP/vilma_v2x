@@ -74,4 +74,4 @@ COPY --chmod=755 ./scripts/ros_entrypoint.sh /
 # # Changing from root to user
 # USER user
 
-# ENTRYPOINT ["/ros_entrypoint.sh"]
+ENTRYPOINT ["/ros_entrypoint.sh"]

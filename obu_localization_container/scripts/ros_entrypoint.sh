@@ -7,4 +7,5 @@ source "/workspace/install/setup.bash"
 
 # ros2 launch eagleye_rt eagleye_obu.launch.py
 
-exec "$@"
+#* DEV mode
+exec /bin/bash
