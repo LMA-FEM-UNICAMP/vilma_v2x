@@ -133,6 +133,7 @@ void VilmaObuCan::send_can_timer_callback()
     is_new_data_ = false;
 
     can_frame_t send_frame;
+    int sendbytes = -1;
 
     //* CAN_IMU -----------------------------------------------------------------------------------------------------
 
@@ -151,7 +152,7 @@ void VilmaObuCan::send_can_timer_callback()
     send_frame.data[6] = 0x01;                                                       // General Confidence
     send_frame.data[7] = 0x01;                                                       // General Confidence
 
-    int sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
+    sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
 
     RCLCPP_DEBUG(this->get_logger(), "CAN data sent; ID: %d; Data length: %d", send_frame.can_id, sendbytes);
 
@@ -171,7 +172,7 @@ void VilmaObuCan::send_can_timer_callback()
     send_frame.data[6] = 0x00;                                   // ? Longitudinal Acceleration LSB
     send_frame.data[7] = 102;  // ? Longitudinal Acceleration confidence (102 - unavailable)
 
-    int sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
+    sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
 
     RCLCPP_DEBUG(this->get_logger(), "CAN data sent; ID: %d; Data length: %d", send_frame.can_id, sendbytes);
   }
