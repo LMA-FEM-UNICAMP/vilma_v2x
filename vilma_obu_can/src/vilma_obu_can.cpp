@@ -154,7 +154,7 @@ void VilmaObuCan::send_can_timer_callback()
     send_frame.data[6] = 0x01;                                                       // General Confidence
     send_frame.data[7] = 0x01;                                                       // General Confidence
 
-    // sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
+    sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
 
     RCLCPP_DEBUG(this->get_logger(), "CAN data sent; ID: %d; Data length: %d", send_frame.can_id, sendbytes);
 
