@@ -30,7 +30,6 @@ install(TARGETS vilma_obu_can_node
 
 
 install(DIRECTORY 
-  param
   launch
   scripts
   DESTINATION share/${PROJECT_NAME} 
