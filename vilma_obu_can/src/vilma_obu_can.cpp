@@ -124,6 +124,8 @@ void VilmaObuCan::free_acc_callback(const geometry_msgs::msg::Vector3Stamped::Sh
 void VilmaObuCan::vilma_velocity_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
 {
   vehicle_speed_cm_per_s_ = safeAssignToInt16(msg->longitudinal_velocity * 100.0);
+
+  is_new_data_ = true;
 }
 
 void VilmaObuCan::send_can_timer_callback()
@@ -152,7 +154,7 @@ void VilmaObuCan::send_can_timer_callback()
     send_frame.data[6] = 0x01;                                                       // General Confidence
     send_frame.data[7] = 0x01;                                                       // General Confidence
 
-    sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
+    // sendbytes = write(socket_out_, &send_frame, sizeof(can_frame_t));
 
     RCLCPP_DEBUG(this->get_logger(), "CAN data sent; ID: %d; Data length: %d", send_frame.can_id, sendbytes);
 
