@@ -50,6 +50,8 @@ RUN . /opt/ros/humble/setup.sh && \
 
 COPY config/cyclonedds.xml /workspace/
 
+COPY config/xsens_mti_node.yaml /workspace/install/obu_can_vstate/share/obu_can_vstate/param/xsens_mti_node.yaml
+
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 ENV CYCLONEDDS_URI=/workspace/cyclonedds.xml
 ENV ROS_DOMAIN_ID=0
