@@ -19,9 +19,9 @@
       # - cam_ts
       # - cpm_ts
       # - denm
-      # - mapem_ts
+      - mapem_ts
       # - mcm_uulm
-      # - spatem_ts
+      - spatem_ts
       # - vam_ts
     subscriber_queue_size: 10
     publisher_queue_size: 10

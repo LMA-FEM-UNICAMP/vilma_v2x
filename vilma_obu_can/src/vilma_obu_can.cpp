@@ -124,6 +124,8 @@ void VilmaObuCan::free_acc_callback(const geometry_msgs::msg::Vector3Stamped::Sh
 void VilmaObuCan::vilma_velocity_callback(const autoware_vehicle_msgs::msg::VelocityReport::SharedPtr msg)
 {
   vehicle_speed_cm_per_s_ = safeAssignToInt16(msg->longitudinal_velocity * 100.0);
+
+  is_new_data_ = true;
 }
 
 void VilmaObuCan::send_can_timer_callback()
