@@ -59,6 +59,9 @@ ENV ROS_DOMAIN_ID=0
 # Source ROS automatically
 RUN echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc
 RUN echo "source /workspace/install/setup.bash" >> ~/.bashrc
+RUN echo "export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp" >> ~/.bashrc
+RUN echo "export CYCLONEDDS_URI=/workspace/cyclonedds.xml" >> ~/.bashrc
+RUN echo "export ROS_DOMAIN_ID=0" >> ~/.bashrc
 
 # ! DEV
 RUN apt install -y ros-humble-rosbag2
